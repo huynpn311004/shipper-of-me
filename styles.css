@@ -688,14 +688,34 @@
       color: var(--text-sec);
     }
     .setting-inline-row {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: stretch; gap: 8px;
     }
     .setting-inline-row input {
       flex: 1;
       min-width: 0;
+      height: 48px;
+      border-radius: 12px;
     }
-    .setting-inline-row .btn {
+    .setting-inline-row .btn,
+    .setting-inline-row button,
+    #btn-save-google-key {
       flex-shrink: 0;
+      min-width: 92px;
+      height: 48px;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    #btn-save-google-key {
+      background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+      color: #fff;
+      border: 1px solid rgba(37,99,235,.35);
+      box-shadow: 0 6px 14px rgba(37,99,235,.22);
+    }
+    #btn-save-google-key:hover {
+      background: linear-gradient(180deg, #1D4ED8 0%, #1E40AF 100%);
     }
     .setting-group .form-group:last-child { margin-bottom: 0; }
 
@@ -707,6 +727,72 @@
     .loc-item-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 8px;
+      gap: 8px;
+    }
+    .loc-item-header .btn {
+      height: 34px;
+      font-size: 12px;
+      padding: 0 10px;
+      border-radius: 10px;
+    }
+    .loc-item-header .loc-delete {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .loc-item-header .loc-delete:hover {
+      background: var(--bg);
+      border-color: var(--border);
+    }
+    .loc-map-popup {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .loc-map-popup-row {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .loc-map-popup-input {
+      flex: 1; min-width: 0; height: 46px;
+      border-radius: 12px;
+    }
+    .loc-map-popup-row .btn,
+    .loc-map-popup-actions .btn {
+      height: 46px;
+      border-radius: 12px;
+      padding: 0 14px;
+      font-size: 13px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .loc-map-popup-actions {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 8px; flex-wrap: wrap;
+    }
+    .loc-map-popup-actions > .btn {
+      align-self: stretch;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 18px;
+    }
+    .loc-map-popup-coords {
+      display: flex; gap: 8px; flex: 1; min-width: 220px;
+      align-items: flex-end;
+    }
+    .loc-map-popup-coord {
+      flex: 1; min-width: 0;
+    }
+    .loc-map-popup-label {
+      font-size: 11px; color: var(--text-sec); margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .loc-map-popup-coord input {
+      width: 100%; height: 46px; border-radius: 12px;
+    }
+    .loc-map-popup-map {
+      width: 100%; height: 260px; border-radius: 12px;
+      overflow: hidden; border: 1px solid var(--border);
+      background: #eef4ff;
     }
     .loc-item-name { font-size: 15px; font-weight: 600; }
     .loc-item-addr { font-size: 13px; color: var(--text-sec); }

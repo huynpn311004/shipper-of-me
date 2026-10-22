@@ -2005,25 +2005,25 @@ const FormModule = (() => {
       const initialLat = Number(loc.lat) || 10.7769;
       const initialLng = Number(loc.lng) || 106.7009;
       const body = `
-        <div class="loc-map-popup" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input id="loc-popup-address" type="text" value="${Utils.escHtml(loc.address || '')}" placeholder="Nhập địa chỉ để tìm" style="flex:1;min-width:0;"/>
+        <div class="loc-map-popup">
+          <div class="loc-map-popup-row">
+            <input id="loc-popup-address" class="loc-map-popup-input" type="text" value="${Utils.escHtml(loc.address || '')}" placeholder="Nhập địa chỉ để tìm"/>
             <button class="btn btn-primary btn-sm" id="loc-popup-search">Tìm</button>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <div class="loc-map-popup-actions">
             <button class="btn btn-secondary btn-sm" id="loc-popup-gps">Lấy GPS hiện tại</button>
-            <div style="display:flex;gap:8px;flex:1;min-width:220px;">
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;color:var(--text-sec);margin-bottom:4px;">Vĩ độ</div>
-                <input id="loc-popup-lat" type="text" value="${Number.isFinite(loc.lat) ? loc.lat.toFixed(7) : initialLat.toFixed(7)}"/>
+            <div class="loc-map-popup-coords">
+              <div class="loc-map-popup-coord">
+                <div class="loc-map-popup-label">Vĩ độ</div>
+                <input id="loc-popup-lat" type="text" value="${Number.isFinite(loc.lat) ? loc.lat.toFixed(7) : ''}" placeholder="--"/>
               </div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;color:var(--text-sec);margin-bottom:4px;">Kinh độ</div>
-                <input id="loc-popup-lng" type="text" value="${Number.isFinite(loc.lng) ? loc.lng.toFixed(7) : initialLng.toFixed(7)}"/>
+              <div class="loc-map-popup-coord">
+                <div class="loc-map-popup-label">Kinh độ</div>
+                <input id="loc-popup-lng" type="text" value="${Number.isFinite(loc.lng) ? loc.lng.toFixed(7) : ''}" placeholder="--"/>
               </div>
             </div>
           </div>
-          <div id="loc-popup-map" style="width:100%;height:260px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#eef4ff;"></div>
+          <div id="loc-popup-map" class="loc-map-popup-map"></div>
         </div>
       `;
 
