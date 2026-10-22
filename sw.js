@@ -3,7 +3,7 @@
 // Chiến lược: Network-First cho HTML, Cache-First cho assets
 // ============================================================
 
-const CACHE_VERSION = 'sgh-v1.2.1';
+const CACHE_VERSION = 'sgh-v1.2.2';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FALLBACK_URL  = './index.html';
 
@@ -11,10 +11,7 @@ const FALLBACK_URL  = './index.html';
 const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
-  './icon.svg',
-  // Leaflet CDN (cache khi online lần đầu)
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  './icon.svg'
 ];
 
 // ---- INSTALL -----------------------------------------------
@@ -65,18 +62,12 @@ self.addEventListener('fetch', (event) => {
   // Bỏ qua chrome-extension và các scheme khác
   if (!['http:', 'https:'].includes(url.protocol)) return;
 
-  // Bỏ qua Nominatim / geocoding API — không cache dữ liệu bản đồ
-  if (url.hostname.includes('nominatim.openstreetmap.org')) return;
+  // Bỏ qua Google Maps / geocoding API: không cache dữ liệu bản đồ
+  if (url.hostname.includes('maps.googleapis.com') || url.hostname.includes('googleapis.com')) return;
 
   // --- Navigation requests (HTML pages): Network-First ---
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstWithFallback(request));
-    return;
-  }
-
-  // --- Leaflet CSS/JS và tile bản đồ: Network-First với cache ---
-  if (url.hostname.includes('unpkg.com') || url.hostname.includes('tile.openstreetmap.org')) {
-    event.respondWith(networkFirstWithCache(request));
     return;
   }
 

@@ -11,753 +11,21 @@
   <meta name="theme-color" content="#2563EB"/>
   <title>Sổ Giao Hàng</title>
   <link rel="manifest" href="manifest.json"/>
-  <link rel="icon" href="icon.svg" type="image/svg+xml"/>
-  <link rel="apple-touch-icon" href="icon.svg"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="icon" href="4-icon-shipper_9937d5a87ccd40c686194426bf740106_grande.webp" type="image/webp"/>
+  <link rel="apple-touch-icon" href="4-icon-shipper_9937d5a87ccd40c686194426bf740106_grande.webp" type="image/webp"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-  <style>
-    /* =========================================================
-       CSS DESIGN SYSTEM — Sổ Giao Hàng
-       Màu chủ đạo: Sapphire Blue #2563EB
-    ========================================================= */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <link rel="stylesheet" href="styles.css"/>
 
-    :root {
-      --blue:        #2563EB;
-      --blue-dark:   #1D4ED8;
-      --blue-light:  #EFF6FF;
-      --blue-mid:    #BFDBFE;
-
-      --bg:          #F8FAFC;
-      --surface:     #FFFFFF;
-      --text:        #1E293B;
-      --text-sec:    #64748B;
-      --border:      #E2E8F0;
-      --danger:      #DC2626;
-      --danger-bg:   #FEF2F2;
-      --success:     #16A34A;
-      --success-bg:  #F0FDF4;
-
-      --radius:      13px;
-      --radius-sm:   8px;
-      --radius-lg:   18px;
-
-      --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
-      --shadow-md:   0 4px 12px rgba(0,0,0,.10);
-
-      --topbar-h:    56px;
-      --bottomnav-h: 60px;
-
-      --safe-top:    env(safe-area-inset-top, 0px);
-      --safe-bot:    env(safe-area-inset-bottom, 0px);
-    }
-
-    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
-
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      overflow-x: hidden;
-    }
-
-    /* --- SCROLLBAR --- */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-    /* ---- TOP BAR ---- */
-    /* ---- TOP BAR ---- */
-    #topbar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: calc(var(--topbar-h) + var(--safe-top));
-      padding-top: var(--safe-top);
-      background: var(--blue);
-      display: flex; align-items: center; justify-content: space-between;
-      padding-left: 16px; padding-right: 16px;
-      box-shadow: 0 2px 8px rgba(37,99,235,.3);
-    }
-    .topbar-brand {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .topbar-brand-icon {
-      font-size: 20px; line-height: 1;
-    }
-    #topbar-title {
-      font-size: 18px; font-weight: 700; color: #fff;
-      letter-spacing: -.2px;
-    }
-    #topbar-clock {
-      font-size: 12px; color: rgba(255,255,255,.9); white-space: nowrap;
-      font-weight: 500; line-height: 1.3; text-align: right;
-    }
-    .btn-icon {
-      width: 40px; height: 40px; border: none; background: transparent;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      border-radius: var(--radius-sm); color: #fff; flex-shrink: 0;
-      transition: background .15s;
-    }
-    .btn-icon:hover, .btn-icon:active { background: rgba(255,255,255,.15); }
-
-    /* ---- MAIN CONTENT ---- */
-    #main {
-      padding-top: calc(var(--topbar-h) + var(--safe-top));
-      padding-bottom: calc(var(--bottomnav-h) + var(--safe-bot));
-      min-height: 100dvh;
-    }
-
-    /* ---- BOTTOM NAV ---- */
-    #bottomnav {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      height: calc(var(--bottomnav-h) + var(--safe-bot));
-      padding-bottom: var(--safe-bot);
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex; align-items: stretch;
-      box-shadow: 0 -2px 10px rgba(0,0,0,.06);
-    }
-    .bn-item {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 4px;
-      cursor: pointer; border: none; background: transparent;
-      color: var(--text-sec); font-size: 11.5px; font-weight: 500;
-      transition: color .15s, transform .1s; padding: 2px 4px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .bn-item:active { transform: scale(0.95); }
-    .bn-item.active {
-      color: var(--blue);
-      font-weight: 700;
-    }
-    .bn-item.active svg {
-      stroke-width: 2.3;
-    }
-    .bn-item svg { flex-shrink: 0; }
-
-    /* ---- SCREENS ---- */
-    .screen { display: none; }
-    .screen.active { display: block; }
-
-    /* ---- SEARCH SECTION ---- */
-    .search-container {
-      padding: 16px 16px 0;
-      position: relative;
-    }
-    .search-wrap {
-      position: relative;
-    }
-    #search-input,
-    #list-search {
-      width: 100%; height: 50px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0 44px 0 46px;
-      font-size: 15px; color: var(--text);
-      background: var(--surface);
-      outline: none;
-      box-shadow: var(--shadow-sm);
-      transition: border-color .2s, box-shadow .2s;
-      font-family: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      box-sizing: border-box;
-      display: block;
-    }
-    #search-input:focus,
-    #list-search:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
-    }
-    #search-input::placeholder,
-    #list-search::placeholder {
-      color: var(--text-sec);
-      font-size: 14.5px;
-    }
-    .search-icon {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: var(--text-sec); pointer-events: none;
-      z-index: 2;
-    }
-    #search-clear,
-    #list-search-clear {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      width: 32px; height: 32px; border: none; background: transparent;
-      cursor: pointer; border-radius: 50%; display: none;
-      align-items: center; justify-content: center; color: var(--text-sec);
-      z-index: 2;
-      transition: background .15s, color .15s;
-    }
-    #search-clear:hover,
-    #list-search-clear:hover {
-      background: var(--border);
-      color: var(--text);
-    }
-    #search-clear.visible,
-    #list-search-clear.visible { display: flex; }
-
-    input[type="search"]::-webkit-search-decoration,
-    input[type="search"]::-webkit-search-cancel-button,
-    input[type="search"]::-webkit-search-results-button,
-    input[type="search"]::-webkit-search-results-decoration {
-      -webkit-appearance: none;
-    }
-
-    /* Dropdown gợi ý */
-    #search-dropdown {
-      position: absolute; top: calc(100% + 4px); left: 16px; right: 16px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow-md);
-      z-index: 50; max-height: 280px; overflow-y: auto;
-      display: none;
-    }
-    #search-dropdown.open { display: block; }
-    .suggest-item {
-      padding: 13px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
-      transition: background .15s;
-    }
-    .suggest-item:last-child { border-bottom: none; }
-    .suggest-item:hover, .suggest-item:active { background: var(--blue-light); }
-    .suggest-name { font-size: 15px; font-weight: 600; color: var(--text); }
-    .suggest-phone { font-size: 13px; color: var(--text-sec); margin-top: 1px; }
-    .suggest-addr { font-size: 12px; color: var(--text-sec); margin-top: 1px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* ---- CUSTOMER CARD ---- */
-    #customer-detail { padding: 16px; }
-
-    .cust-card {
-      background: var(--surface); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 18px;
-      box-shadow: var(--shadow-sm); margin-bottom: 14px;
-    }
-    .cust-name {
-      font-size: 24px; font-weight: 700; color: var(--text);
-      margin-bottom: 6px; line-height: 1.2;
-    }
-    .cust-phone-row {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-    }
-    .cust-phone {
-      font-size: 20px; font-weight: 600; color: var(--blue);
-      text-decoration: none;
-    }
-    .tag {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: var(--blue-light); color: var(--blue);
-      border-radius: 6px; padding: 4px 10px;
-      font-size: 13px; font-weight: 500;
-    }
-    .tag-gray { background: var(--bg); color: var(--text-sec); }
-    .cust-stats {
-      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
-    }
-    .cust-note {
-      font-size: 14px; color: var(--text-sec);
-      background: var(--bg); border-radius: var(--radius-sm);
-      padding: 10px 12px; margin-top: 8px; line-height: 1.5;
-    }
-
-    /* ---- ACTION BUTTONS ---- */
-    .action-row {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
-    }
-    .btn {
-      height: 48px; border-radius: var(--radius);
-      font-size: 15px; font-weight: 600; cursor: pointer;
-      border: none; display: inline-flex; align-items: center;
-      justify-content: center; gap: 7px; padding: 0 18px;
-      transition: background .15s, transform .1s, box-shadow .15s;
-      white-space: nowrap; text-decoration: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active { transform: scale(.97); }
-    .btn-primary {
-      background: var(--blue); color: #fff;
-      box-shadow: 0 2px 6px rgba(37,99,235,.3);
-    }
-    .btn-primary:hover { background: var(--blue-dark); }
-    .btn-secondary {
-      background: var(--surface); color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { background: var(--bg); }
-    .btn-danger {
-      background: var(--danger-bg); color: var(--danger);
-      border: 1px solid #FECACA;
-    }
-    .btn-danger:hover { background: #FEE2E2; }
-    .btn-success {
-      background: var(--success-bg); color: var(--success);
-      border: 1px solid #BBF7D0;
-    }
-    .btn-sm { height: 38px; font-size: 13px; padding: 0 12px; }
-    .btn-full { width: 100%; }
-
-    /* ---- ADDRESS TABS ---- */
-    .addr-tabs {
-      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
-      margin-bottom: 12px; scrollbar-width: none;
-    }
-    .addr-tabs::-webkit-scrollbar { display: none; }
-    .addr-tab {
-      flex-shrink: 0; padding: 8px 14px; border-radius: 20px;
-      font-size: 14px; font-weight: 500; cursor: pointer;
-      border: 1.5px solid var(--border);
-      background: var(--surface); color: var(--text-sec);
-      transition: all .15s; white-space: nowrap;
-    }
-    .addr-tab.active {
-      background: var(--blue); color: #fff; border-color: var(--blue);
-    }
-
-    /* ---- MAP ---- */
-    #map {
-      height: 240px; border-radius: var(--radius); overflow: hidden;
-      border: 1px solid var(--border); margin-bottom: 14px;
-      background: var(--bg);
-    }
-    #map-form { height: 220px; }
-    .map-offline-msg {
-      display: flex; align-items: center; justify-content: center;
-      height: 100%; color: var(--text-sec); font-size: 14px;
-      flex-direction: column; gap: 8px;
-    }
-
-    /* ---- PHOTOS ---- */
-    .photo-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-      gap: 8px; margin-bottom: 14px;
-    }
-    .photo-thumb {
-      aspect-ratio: 1; border-radius: var(--radius-sm);
-      object-fit: cover; cursor: pointer; border: 1px solid var(--border);
-      transition: transform .15s;
-    }
-    .photo-thumb:hover { transform: scale(1.04); }
-
-    /* ---- LIGHTBOX ---- */
-    #lightbox {
-      position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,.92);
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    #lightbox.open { display: flex; }
-    #lightbox img {
-      max-width: 100%; max-height: 80dvh;
-      object-fit: contain; border-radius: var(--radius-sm);
-    }
-    #lightbox-close {
-      position: absolute; top: calc(16px + var(--safe-top)); right: 16px;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(255,255,255,.2); color: #fff;
-      border: none; cursor: pointer; font-size: 22px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .lb-nav {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      background: rgba(255,255,255,.2); color: #fff; border: none;
-      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 20px;
-    }
-    #lb-prev { left: 12px; }
-    #lb-next { right: 12px; }
-    #lb-counter {
-      position: absolute; bottom: calc(20px + var(--safe-bot));
-      color: rgba(255,255,255,.8); font-size: 14px;
-    }
-    #lightbox-del {
-      position: absolute; top: calc(16px + var(--safe-top)); left: 16px;
-      background: rgba(220,38,38,.7); color: #fff; border: none;
-      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    /* ---- ADDRESS INFO ---- */
-    .addr-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
-    }
-    .addr-label { font-size: 12px; color: var(--text-sec); font-weight: 500;
-      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-    .addr-text { font-size: 15px; color: var(--text); line-height: 1.4; }
-    .addr-coords { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
-
-    /* ---- EMPTY STATE ---- */
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 60px 24px; text-align: center;
-    }
-    .empty-icon { color: var(--border); margin-bottom: 16px; }
-    .empty-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-    .empty-sub { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
-
-    /* ---- TOAST ---- */
-    #toast-container {
-      position: fixed; bottom: calc(var(--bottomnav-h) + var(--safe-bot) + 12px);
-      left: 16px; right: 16px; z-index: 400;
-      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
-    }
-    .toast {
-      padding: 13px 16px; border-radius: var(--radius);
-      font-size: 15px; font-weight: 500;
-      box-shadow: var(--shadow-md); animation: slideUp .25s ease;
-      pointer-events: all;
-    }
-    .toast-success { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
-    .toast-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #FECACA; }
-    .toast-info { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-    /* ---- MODAL ---- */
-    #modal-overlay {
-      position: fixed; inset: 0; z-index: 250;
-      background: rgba(0,0,0,.45);
-      display: none; align-items: flex-end; justify-content: center;
-    }
-    #modal-overlay.open { display: flex; }
-    #modal-box {
-      background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      padding: 24px 20px;
-      padding-bottom: calc(24px + var(--safe-bot));
-      width: 100%; max-width: 560px;
-      max-height: 90dvh; overflow-y: auto;
-    }
-    .modal-title {
-      font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--text);
-    }
-    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-    /* ---- FORM ---- */
-    .form-section { padding: 16px; }
-    .form-group { margin-bottom: 18px; }
-    label {
-      display: block; font-size: 15px; font-weight: 600;
-      color: var(--text); margin-bottom: 7px;
-    }
-    label span.req { color: var(--danger); }
-    input[type="text"], input[type="tel"], textarea, select {
-      width: 100%; padding: 13px 14px;
-      border: 1.5px solid var(--border); border-radius: var(--radius);
-      font-size: 16px; color: var(--text); background: var(--surface);
-      font-family: inherit; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      -webkit-appearance: none;
-    }
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
-    }
-    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-    select { cursor: pointer; }
-    .field-hint { font-size: 13px; color: var(--text-sec); margin-top: 5px; }
-    .field-error { font-size: 13px; color: var(--danger); margin-top: 5px; }
-
-    /* GPS và địa chỉ */
-    .input-with-btn { display: flex; gap: 8px; }
-    .input-with-btn input { flex: 1; }
-    .coord-row {
-      display: flex; gap: 8px;
-    }
-    .coord-row .form-group { flex: 1; margin-bottom: 0; }
-
-    /* Upload ảnh */
-    .photo-upload-area {
-      border: 2px dashed var(--border); border-radius: var(--radius);
-      padding: 20px; text-align: center; cursor: pointer;
-      transition: border-color .2s, background .2s; color: var(--text-sec);
-    }
-    .photo-upload-area:hover { border-color: var(--blue); background: var(--blue-light); }
-    .photo-upload-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 8px; margin-top: 12px;
-    }
-    .photo-preview-item {
-      position: relative; aspect-ratio: 1;
-    }
-    .photo-preview-item img {
-      width: 100%; height: 100%; object-fit: cover;
-      border-radius: var(--radius-sm); border: 1px solid var(--border);
-    }
-    .photo-remove-btn {
-      position: absolute; top: -6px; right: -6px;
-      width: 22px; height: 22px; border-radius: 50%;
-      background: var(--danger); color: #fff; border: 2px solid #fff;
-      font-size: 14px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; line-height: 1;
-    }
-
-    /* ---- LIST SCREEN ---- */
-    .list-header {
-      padding: 16px 16px 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px;
-    }
-    .list-title {
-      font-size: 22px; font-weight: 700; color: var(--text);
-      letter-spacing: -.3px; line-height: 1.2;
-    }
-    .list-count {
-      font-size: 13px; color: var(--text-sec); font-weight: 500; margin-top: 2px;
-    }
-    .customer-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 15px;
-      margin: 0 16px 12px; box-shadow: var(--shadow-sm);
-      transition: border-color .18s, box-shadow .18s, transform .12s;
-      cursor: pointer;
-    }
-    .customer-item:hover {
-      border-color: var(--blue-mid);
-      box-shadow: 0 4px 14px rgba(37,99,235,.1);
-    }
-    .customer-item:active {
-      transform: scale(0.995);
-    }
-    .ci-top { display: flex; align-items: flex-start; gap: 12px; }
-    .ci-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: var(--blue-light); color: var(--blue);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 700; flex-shrink: 0;
-      border: 1px solid var(--blue-mid);
-    }
-    .ci-info { flex: 1; min-width: 0; }
-    .ci-name-row {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-      margin-bottom: 3px;
-    }
-    .ci-name {
-      font-size: 16px; font-weight: 700; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .ci-phone {
-      font-size: 14px; color: var(--blue); font-weight: 600;
-      display: inline-flex; align-items: center; gap: 4px;
-      text-decoration: none; padding: 2px 7px; border-radius: 5px;
-      background: var(--blue-light); flex-shrink: 0;
-      transition: background .15s;
-    }
-    .ci-phone:hover {
-      background: var(--blue-mid);
-    }
-    .ci-addr {
-      font-size: 13px; color: var(--text-sec); margin-top: 5px;
-      display: flex; align-items: flex-start; gap: 5px; line-height: 1.4;
-    }
-    .ci-addr-text {
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
-    }
-    .ci-meta {
-      display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center;
-    }
-    .ci-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 8px; border-radius: 6px;
-      font-size: 11.5px; font-weight: 500;
-      background: #F1F5F9; color: #475569;
-    }
-    .ci-badge-blue {
-      background: var(--blue-light); color: var(--blue); font-weight: 600;
-    }
-    .ci-badge-success {
-      background: var(--success-bg); color: var(--success); font-weight: 600;
-    }
-    .ci-actions {
-      display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border);
-      padding-top: 10px;
-    }
-    .ci-actions .btn {
-      height: 38px; font-size: 13px; font-weight: 600;
-      border-radius: var(--radius-sm);
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-      padding: 0 12px;
-    }
-
-    /* ---- SORT BAR ---- */
-    .sort-bar {
-      display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 14px;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .sort-bar::-webkit-scrollbar { display: none; }
-    .sort-btn {
-      flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
-      font-size: 13px; font-weight: 500; cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--surface); color: var(--text-sec);
-      transition: all .15s; white-space: nowrap;
-      display: inline-flex; align-items: center; gap: 4px;
-    }
-    .sort-btn:hover {
-      background: var(--blue-light);
-      color: var(--blue);
-      border-color: var(--blue-mid);
-    }
-    .sort-btn.active {
-      background: var(--blue); color: #fff; border-color: var(--blue);
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(37,99,235,.25);
-    }
-
-    /* ---- BACKUP SCREEN ---- */
-    .backup-section {
-      padding: 16px;
-    }
-    .backup-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-      box-shadow: var(--shadow-sm);
-    }
-    .backup-icon {
-      width: 48px; height: 48px; background: var(--blue-light);
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      color: var(--blue); margin-bottom: 14px;
-    }
-    .backup-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-    .backup-card p { font-size: 14px; color: var(--text-sec); line-height: 1.5; margin-bottom: 14px; }
-
-    /* ---- SETTINGS SCREEN ---- */
-    .settings-section { padding: 16px; }
-    .setting-group { margin-bottom: 20px; }
-    .setting-group-title {
-      font-size: 13px; font-weight: 600; color: var(--text-sec);
-      text-transform: uppercase; letter-spacing: .5px;
-      margin-bottom: 10px;
-    }
-    .setting-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 0; border-bottom: 1px solid var(--border);
-    }
-    .setting-item:last-child { border-bottom: none; }
-    .setting-item-label { font-size: 16px; font-weight: 500; }
-    .setting-item-sub { font-size: 13px; color: var(--text-sec); margin-top: 2px; }
-
-    /* ---- LOCATION EDIT ---- */
-    .loc-item {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
-    }
-    .loc-item-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .loc-item-name { font-size: 15px; font-weight: 600; }
-    .loc-item-addr { font-size: 13px; color: var(--text-sec); }
-
-    /* ---- PROGRESS / LOADING ---- */
-    .loading-spinner {
-      width: 28px; height: 28px; border: 3px solid var(--border);
-      border-top-color: var(--blue); border-radius: 50%;
-      animation: spin .8s linear infinite; margin: auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-overlay {
-      position: fixed; inset: 0; z-index: 500;
-      background: rgba(248,250,252,.8);
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 14px; display: none;
-    }
-    .loading-overlay.open { display: flex; }
-    .loading-overlay p { font-size: 15px; color: var(--text-sec); font-weight: 500; }
-
-    /* ---- DELIVERY HISTORY ---- */
-    .history-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 0; border-bottom: 1px solid var(--border);
-    }
-    .history-item:last-child { border-bottom: none; }
-    .history-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--blue); flex-shrink: 0;
-    }
-    .history-time { font-size: 14px; color: var(--text-sec); }
-
-    /* ---- UPDATE BANNER ---- */
-    #update-banner {
-      position: fixed; bottom: calc(var(--bottomnav-h) + var(--safe-bot) + 12px);
-      left: 16px; right: 16px; z-index: 450;
-      background: var(--blue); color: #fff;
-      border-radius: var(--radius); padding: 14px 16px;
-      display: flex; align-items: center; gap: 12px;
-      box-shadow: var(--shadow-md); display: none;
-    }
-    #update-banner.show { display: flex; }
-    #update-banner p { flex: 1; font-size: 14px; font-weight: 500; }
-
-    /* ---- UTILITY ---- */
-    .section-title {
-      font-size: 16px; font-weight: 700; color: var(--text);
-      margin-bottom: 12px; padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .divider { height: 1px; background: var(--border); margin: 16px 0; }
-    .flex-center { display: flex; align-items: center; justify-content: center; }
-    .gap-8 { gap: 8px; }
-    .mt-8 { margin-top: 8px; }
-    .mt-12 { margin-top: 12px; }
-    .fw-600 { font-weight: 600; }
-    .text-sec { color: var(--text-sec); }
-    .text-small { font-size: 13px; }
-
-    /* Responsive: ẩn clock text trên màn hình rất nhỏ */
-    @media (max-width: 340px) {
-      #topbar-clock .clock-date { display: none; }
-    }
-
-    /* Form địa chỉ panel */
-    .addr-panel { display: none; }
-    .addr-panel.open { display: block; }
-
-    /* Geocoding result list */
-    #geocode-results {
-      margin-top: 8px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      overflow: hidden; display: none;
-    }
-    #geocode-results.open { display: block; }
-    .geocode-item {
-      padding: 11px 14px; cursor: pointer; font-size: 14px;
-      border-bottom: 1px solid var(--border); line-height: 1.4;
-      color: var(--text); transition: background .15s;
-    }
-    .geocode-item:last-child { border-bottom: none; }
-    .geocode-item:hover { background: var(--blue-light); }
-
-    /* Warning note */
-    .note-warning {
-      background: #FFF7ED; border: 1px solid #FED7AA;
-      border-radius: var(--radius-sm); padding: 10px 12px;
-      font-size: 13px; color: #9A3412; line-height: 1.5; margin-bottom: 14px;
-    }
-    .note-info {
-      background: var(--blue-light); border: 1px solid var(--blue-mid);
-      border-radius: var(--radius-sm); padding: 10px 12px;
-      font-size: 13px; color: var(--blue); line-height: 1.5; margin-bottom: 14px;
-    }
-
-    /* Screen page title */
-    .page-title {
-      padding: 20px 16px 4px;
-      font-size: 24px; font-weight: 700; color: var(--text);
-    }
-    .page-sub {
-      padding: 0 16px 16px;
-      font-size: 14px; color: var(--text-sec);
-    }
-  </style>
 </head>
 <body>
 
 <!-- ===================== TOP BAR ===================== -->
 <header id="topbar" role="banner">
   <div class="topbar-brand">
-    <span class="topbar-brand-icon">📦</span>
+    <img class="topbar-brand-icon" src="4-icon-shipper_9937d5a87ccd40c686194426bf740106_grande.webp" alt="Logo shipper" />
     <span id="topbar-title">Sổ Giao Hàng</span>
   </div>
   <div id="topbar-clock" aria-live="polite">
@@ -799,42 +67,44 @@
   <!-- ========== SCREEN: ADD/EDIT ========== -->
   <section id="screen-add" class="screen">
     <div class="page-title" id="add-screen-title">Thêm Khách Hàng</div>
-    <div class="page-sub">Điền thông tin để lưu hồ sơ khách hàng</div>
 
     <div class="form-section">
-      <!-- Thông tin cơ bản -->
-      <div class="section-title">Thông Tin Cơ Bản</div>
+      <div class="setting-group">
+        <div class="setting-group-title">Thông Tin Cơ Bản</div>
+        <div class="setting-body">
+          <div class="form-group field-box">
+            <div class="field-box-label">Số điện thoại <span class="req">*</span></div>
+            <input type="tel" id="f-phone" inputmode="tel" autocomplete="tel"
+                   placeholder="0** *** ****"/>
+            <div class="field-hint" id="f-phone-hint"></div>
+            <div class="field-error" id="f-phone-error" style="display:none;"></div>
+          </div>
 
-      <div class="form-group">
-        <label for="f-phone">Số điện thoại <span class="req">*</span></label>
-        <input type="tel" id="f-phone" inputmode="tel" autocomplete="tel"
-               placeholder="Ví dụ: 0901234567"/>
-        <div class="field-hint" id="f-phone-hint"></div>
-        <div class="field-error" id="f-phone-error" style="display:none;"></div>
+          <div class="form-group field-box">
+            <div class="field-box-label">Họ và tên</div>
+            <input type="text" id="f-name" autocomplete="name"
+                   placeholder="Tên khách hàng"/>
+          </div>
+
+          <div class="form-group field-box">
+            <div class="field-box-label">Ghi chú chung</div>
+            <textarea id="f-note" rows="3"
+                      placeholder="Ghi chú về khách hàng"></textarea>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="f-name">Họ và tên</label>
-        <input type="text" id="f-name" autocomplete="name"
-               placeholder="Tên khách hàng"/>
-      </div>
+      <div class="setting-group" style="margin-top:20px;">
+        <div class="setting-group-title">Địa Điểm Giao Hàng</div>
+        <div class="setting-body">
+          <div id="locations-editor"></div>
 
-      <div class="form-group">
-        <label for="f-note">Ghi chú chung</label>
-        <textarea id="f-note" rows="3"
-                  placeholder="Ghi chú về khách hàng (thói quen, yêu cầu đặc biệt,...)"></textarea>
+          <button class="btn btn-secondary btn-full mt-8" id="btn-add-location">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Thêm địa điểm giao hàng
+          </button>
+        </div>
       </div>
-
-      <!-- Danh sách địa điểm giao hàng -->
-      <div class="section-title" style="margin-top:8px;">
-        Địa Điểm Giao Hàng
-      </div>
-      <div id="locations-editor"></div>
-
-      <button class="btn btn-secondary btn-full mt-8" id="btn-add-location">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Thêm địa điểm giao hàng
-      </button>
 
       <div style="height:20px;"></div>
       <div class="action-row">
@@ -884,18 +154,16 @@
   <!-- ========== SCREEN: SETTINGS ========== -->
   <section id="screen-settings" class="screen">
     <div class="page-title">Cài Đặt</div>
-    <div class="page-sub">Quản lý sao lưu, thiết bị và cấu hình ứng dụng</div>
-
     <div class="settings-section">
       <!-- Group: Sao Lưu & Khôi Phục -->
       <div class="setting-group">
         <div class="setting-group-title">Sao Lưu &amp; Khôi Phục Dữ Liệu</div>
 
-        <div class="note-warning" style="margin-bottom:12px;">
+        <div class="note-warning" style="margin: 12px 16px 12px;">
           ⚠️ Dữ liệu lưu hoàn toàn trên thiết bị của bạn, không tự đồng bộ lên server. Hãy sao lưu định kỳ để tránh mất dữ liệu khi xóa cache trình duyệt hoặc đổi thiết bị.
         </div>
 
-        <div class="backup-card">
+        <div class="backup-card" style="margin: 0 16px 12px;">
           <div class="backup-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </div>
@@ -908,7 +176,7 @@
           </button>
         </div>
 
-        <div class="backup-card" style="margin-top:12px;">
+        <div class="backup-card" style="margin: 0 16px 16px;">
           <div class="backup-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
@@ -951,14 +219,17 @@
         <div class="setting-group-title">Bản Đồ &amp; Định Vị</div>
         <div class="setting-item">
           <div>
-            <div class="setting-item-label">Tile bản đồ</div>
-            <div class="setting-item-sub">OpenStreetMap &amp; Leaflet (cần Internet)</div>
+            <div class="setting-item-label">Google Maps</div>
+            <div class="setting-item-sub">Google Maps JavaScript API &amp; Geocoding API</div>
           </div>
         </div>
-        <div class="setting-item">
-          <div>
-            <div class="setting-item-label">Geocoding</div>
-            <div class="setting-item-sub">Nominatim OSM (cần Internet)</div>
+        <div class="setting-body" style="padding-top: 12px; padding-bottom: 12px;">
+          <div class="setting-inline-form">
+            <label for="google-maps-api-key" class="setting-key-label">API key</label>
+            <div class="setting-inline-row">
+              <input id="google-maps-api-key" type="text" placeholder="Nhập API key Google Maps" autocomplete="off"/>
+              <button class="btn btn-primary btn-sm" id="btn-save-google-key">Lưu</button>
+            </div>
           </div>
         </div>
       </div>
@@ -983,9 +254,9 @@
       <!-- Group: Dữ Liệu -->
       <div class="setting-group">
         <div class="setting-group-title">Quản Lý Bộ Nhớ</div>
-        <button class="btn btn-danger btn-full" id="btn-clear-all">
+        <button class="btn btn-danger" id="btn-clear-all">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-          Xóa Toàn Bộ Dữ Liệu (Reset)
+          Xóa Toàn Bộ Dữ Liệu
         </button>
       </div>
 
@@ -1054,10 +325,6 @@
   <p>Có bản cập nhật mới. Tải lại để dùng phiên bản mới nhất.</p>
   <button class="btn btn-sm" id="btn-update-reload" style="background:rgba(255,255,255,.2);color:#fff;border:none;flex-shrink:0;">Tải lại</button>
 </div>
-
-<!-- ===================== LEAFLET JS ===================== -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqE=" crossorigin=""></script>
 
 <script>
 'use strict';
@@ -1377,6 +644,17 @@ const DB = (() => {
     });
   }
 
+  // --- SETTINGS ---
+  async function saveSetting(key, value) {
+    await tx(['settings'], 'readwrite', t => putInTx(t, 'settings', { key, value }));
+    return value;
+  }
+
+  async function getSetting(key, defaultValue = null) {
+    const row = await getOne('settings', key);
+    return row ? row.value : defaultValue;
+  }
+
   // --- CUSTOMERS ---
   async function saveCustomer(customer) {
     const now = Date.now();
@@ -1563,7 +841,7 @@ const DB = (() => {
   }
 
   return {
-    open, saveCustomer, getCustomer, getAllCustomers, deleteCustomer, searchCustomers,
+    open, saveSetting, getSetting, saveCustomer, getCustomer, getAllCustomers, deleteCustomer, searchCustomers,
     saveLocation, getLocationsByCustomer, deleteLocation, getAllLocations,
     savePhoto, getPhotosByLocation, deletePhoto,
     addDeliveryEvent, getDeliveryEvents,
@@ -1631,19 +909,58 @@ const ImageModule = (() => {
 })();
 
 // ============================================================
-// MODULE: MapModule — Leaflet + OpenStreetMap
+// MODULE: MapModule — Google Maps
 // ============================================================
 const MapModule = (() => {
-  // Lưu các instance map để tránh khởi tạo lại
   const instances = {};
+  let googleMapsLoader = null;
 
-  // Tạo hoặc lấy instance map
-  function init(containerId, options = {}) {
+  async function getGoogleApiKey() {
+    try {
+      const saved = await DB.getSetting('googleMapsApiKey', localStorage.getItem('googleMapsApiKey') || '');
+      return saved || localStorage.getItem('googleMapsApiKey') || '';
+    } catch (err) {
+      return localStorage.getItem('googleMapsApiKey') || '';
+    }
+  }
+
+  function renderPlaceholder(container, message) {
+    if (!container) return;
+    container.innerHTML = `<div class="map-offline-msg">${message}</div>`;
+  }
+
+  async function ensureGoogleMapsReady() {
+    const key = await getGoogleApiKey();
+    if (!key) return false;
+    if (window.google && window.google.maps) return true;
+    if (googleMapsLoader) return googleMapsLoader;
+
+    googleMapsLoader = new Promise(resolve => {
+      const existingScript = document.querySelector('script[data-google-maps-sdk]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(true), { once: true });
+        existingScript.addEventListener('error', () => resolve(false), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=vi`;
+      script.async = true;
+      script.defer = true;
+      script.dataset.googleMapsSdk = 'true';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
+
+    return googleMapsLoader;
+  }
+
+  async function init(containerId, options = {}) {
     if (instances[containerId]) {
-      // Đảm bảo container visible rồi invalidate
       setTimeout(() => {
-        if (instances[containerId]._leaflet_id) {
-          instances[containerId].invalidateSize();
+        if (instances[containerId]) {
+          google.maps.event.trigger(instances[containerId], 'resize');
         }
       }, 100);
       return instances[containerId];
@@ -1652,65 +969,73 @@ const MapModule = (() => {
     const el = document.getElementById(containerId);
     if (!el) return null;
 
-    const lat  = options.lat  ?? 10.7769;
-    const lng  = options.lng  ?? 106.7009;
+    const key = await getGoogleApiKey();
+    if (!key) {
+      renderPlaceholder(el, 'Chưa có Google Maps API key. Vào Cài đặt để nhập API key.');
+      return null;
+    }
+
+    const ready = await ensureGoogleMapsReady();
+    if (!ready || !window.google || !window.google.maps) {
+      renderPlaceholder(el, 'Google Maps chưa sẵn sàng. Kiểm tra lại API key.');
+      return null;
+    }
+
+    const lat = options.lat ?? 10.7769;
+    const lng = options.lng ?? 106.7009;
     const zoom = options.zoom ?? 15;
 
-    const map = L.map(containerId, {
-      center: [lat, lng],
+    const map = new google.maps.Map(el, {
+      center: { lat, lng },
       zoom,
+      disableDefaultUI: false,
+      mapTypeControl: true,
+      streetViewControl: true,
+      fullscreenControl: true,
       zoomControl: true,
-      attributionControl: true,
+      gestureHandling: 'greedy'
     });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
 
     instances[containerId] = map;
     return map;
   }
 
-  // Xóa instance
   function destroy(containerId) {
     if (instances[containerId]) {
-      instances[containerId].remove();
       delete instances[containerId];
     }
   }
 
-  // Thêm/cập nhật marker draggable
   function setMarker(map, lat, lng, draggable = false, onDrag) {
-    // Xóa markers cũ
-    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
+    if (!map || !window.google || !window.google.maps) return null;
+    if (map._gmMarker) {
+      map._gmMarker.setMap(null);
+    }
 
-    const icon = L.divIcon({
-      html: `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z" fill="#2563EB"/>
-        <circle cx="16" cy="16" r="6" fill="white"/>
-      </svg>`,
-      className: '',
-      iconSize: [32, 40],
-      iconAnchor: [16, 40],
+    const marker = new google.maps.Marker({
+      position: { lat, lng },
+      map,
+      draggable,
+      animation: google.maps.Animation.DROP
     });
 
-    const marker = L.marker([lat, lng], { icon, draggable }).addTo(map);
     if (draggable && onDrag) {
-      marker.on('dragend', e => {
-        const pos = e.target.getLatLng();
-        onDrag(pos.lat, pos.lng);
+      marker.addListener('dragend', () => {
+        const pos = marker.getPosition();
+        onDrag(pos.lat(), pos.lng());
       });
     }
+
+    map._gmMarker = marker;
     return marker;
   }
 
-  // Di chuyển bản đồ đến tọa độ
   function flyTo(map, lat, lng, zoom = 17) {
-    map.flyTo([lat, lng], zoom, { animate: true, duration: 0.8 });
+    if (!map || !window.google || !window.google.maps) return;
+    map.panTo({ lat, lng });
+    map.setZoom(zoom);
   }
 
-  // Lấy GPS hiện tại
   function getCurrentPosition() {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -1732,28 +1057,43 @@ const MapModule = (() => {
     });
   }
 
-  // Reverse geocoding — chỉ gửi tọa độ, không gửi thông tin khách
   async function reverseGeocode(lat, lng) {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-    const res = await fetch(url, {
-      headers: { 'Accept-Language': 'vi', 'User-Agent': 'SoGiaoHang/1.0' }
-    });
+    const key = await getGoogleApiKey();
+    if (!key) throw new Error('Chưa có Google Maps API key');
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${encodeURIComponent(key)}&language=vi`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Dịch vụ không phản hồi');
     const data = await res.json();
-    return data.display_name || '';
+    return data.status === 'OK' && data.results[0] ? data.results[0].formatted_address : '';
   }
 
-  // Forward geocoding — chỉ gửi chuỗi địa chỉ
   async function forwardGeocode(query) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=vn`;
-    const res = await fetch(url, {
-      headers: { 'Accept-Language': 'vi', 'User-Agent': 'SoGiaoHang/1.0' }
-    });
+    const key = await getGoogleApiKey();
+    if (!key) throw new Error('Chưa có Google Maps API key');
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:VN&key=${encodeURIComponent(key)}&language=vi`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Dịch vụ không phản hồi');
-    return res.json(); // Mảng kết quả
+    const data = await res.json();
+    if (data.status !== 'OK' || !Array.isArray(data.results)) return [];
+    return data.results.map(item => ({
+      display_name: item.formatted_address,
+      lat: item.geometry.location.lat,
+      lon: item.geometry.location.lng
+    }));
   }
 
-  return { init, destroy, setMarker, flyTo, getCurrentPosition, reverseGeocode, forwardGeocode };
+  const api = {
+    init,
+    destroy,
+    setMarker,
+    flyTo,
+    getCurrentPosition,
+    reverseGeocode,
+    forwardGeocode,
+    ensureGoogleMapsReady,
+    instances
+  };
+  return api;
 })();
 
 // ============================================================
@@ -2120,27 +1460,40 @@ const CustomerModule = (() => {
 
   // Khởi tạo bản đồ xem (không draggable)
   const instances = {};
-  function initViewMap(lat, lng) {
+  async function initViewMap(lat, lng) {
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
 
-    // Hủy instance cũ nếu tồn tại
-    if (instances['map']) {
-      instances['map'].remove();
-      delete instances['map'];
-      mapEl.innerHTML = '';
+    if (instances['map'] && instances['map']._gmMap) {
+      instances['map']._gmMap.setCenter({ lat, lng });
+      instances['map']._gmMap.setZoom(17);
+      MapModule.setMarker(instances['map']._gmMap, lat, lng, false);
+      return;
     }
 
     if (lat && lng) {
       try {
-        const map = L.map('map', { center: [lat, lng], zoom: 17 });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          maxZoom: 19
-        }).addTo(map);
+        const ready = await MapModule.ensureGoogleMapsReady();
+        if (!ready || !window.google || !window.google.maps) {
+          mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg><span>Google Maps chưa sẵn sàng</span></div>`;
+          return;
+        }
+
+        mapEl.innerHTML = '';
+        const map = new google.maps.Map(mapEl, {
+          center: { lat, lng },
+          zoom: 17,
+          disableDefaultUI: false,
+          mapTypeControl: true,
+          streetViewControl: true,
+          fullscreenControl: true,
+          zoomControl: true,
+          gestureHandling: 'greedy'
+        });
+
         MapModule.setMarker(map, lat, lng, false);
-        instances['map'] = map;
-      } catch(err) {
+        instances['map'] = { _gmMap: map };
+      } catch (err) {
         mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg><span>Không tải được bản đồ</span></div>`;
       }
     } else {
@@ -2563,7 +1916,7 @@ const FormModule = (() => {
     container.innerHTML = '';
 
     if (!locationsDraft.length) {
-      container.innerHTML = `<div class="text-sec text-small" style="padding:10px 0 16px;">Chưa có địa điểm giao hàng. Bấm "Thêm địa điểm" để thêm.</div>`;
+      container.innerHTML = '';
       return;
     }
 
@@ -2599,52 +1952,20 @@ const FormModule = (() => {
         </div>
       </div>
 
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:14px;margin-bottom:5px;">Tên địa điểm</label>
+      <div class="form-group loc-field-box">
+        <div class="field-box-label">Tên địa điểm</div>
         <input type="text" class="loc-label-input" placeholder="Nhà riêng, Công ty, Kho,..." value="${Utils.escHtml(loc.label||'')}"/>
       </div>
 
-      <!-- Tìm địa chỉ văn bản -->
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:14px;margin-bottom:5px;">Địa chỉ văn bản</label>
-        <div class="input-with-btn">
-          <input type="text" class="loc-addr-input" placeholder="Số nhà, đường, phường, quận,..." value="${Utils.escHtml(loc.address||'')}"/>
-          <button class="btn btn-secondary btn-sm loc-geocode-btn" style="white-space:nowrap;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Tìm
-          </button>
-        </div>
-        <div class="geocode-results-list"></div>
+      <div class="form-group loc-field-box" style="margin-bottom:12px;">
+        <div class="field-box-label">Địa chỉ</div>
+        <input type="text" class="loc-addr-input" placeholder="Số nhà, đường, phường, quận,..." value="${Utils.escHtml(loc.address||'')}"/>
       </div>
 
-      <!-- Tọa độ GPS -->
-      <div class="coord-row" style="margin-bottom:8px;">
-        <div class="form-group">
-          <label style="font-size:14px;margin-bottom:5px;">Vĩ độ (Lat)</label>
-          <input type="text" class="loc-lat-input" inputmode="decimal" placeholder="10.7769" value="${loc.lat ? loc.lat.toFixed(7) : ''}"/>
-        </div>
-        <div class="form-group">
-          <label style="font-size:14px;margin-bottom:5px;">Kinh độ (Lng)</label>
-          <input type="text" class="loc-lng-input" inputmode="decimal" placeholder="106.7009" value="${loc.lng ? loc.lng.toFixed(7) : ''}"/>
-        </div>
-      </div>
-      <button class="btn btn-secondary btn-sm loc-gps-btn" style="margin-bottom:12px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
-        Lấy GPS hiện tại
-      </button>
-
-      <!-- Mini map -->
-      <div class="loc-map" id="form-map-${idx}" style="height:200px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--bg);">
-        ${(loc.lat && loc.lng) ? '' : '<div class="map-offline-msg">Chạm bản đồ hoặc nhập tọa độ / địa chỉ để ghim vị trí</div>'}
+      <div class="loc-map" id="form-map-${idx}" style="height:200px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--bg);cursor:pointer;">
+        ${(loc.lat && loc.lng) ? '' : '<div class="map-offline-msg">Nhấn vào bản đồ để chọn vị trí</div>'}
       </div>
 
-      <!-- Ghi chú địa điểm -->
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:14px;margin-bottom:5px;">Ghi chú địa điểm</label>
-        <textarea class="loc-note-input" rows="2" placeholder="Hướng dẫn tìm nhà, đặc điểm nhận dạng,...">${Utils.escHtml(loc.note||'')}</textarea>
-      </div>
-
-      <!-- Upload ảnh -->
       <div class="form-group" style="margin-bottom:0;">
         <label style="font-size:14px;margin-bottom:5px;">Ảnh (cổng nhà, số nhà,...)</label>
         <div class="photo-upload-area loc-upload-area">
@@ -2659,119 +1980,182 @@ const FormModule = (() => {
 
   function bindLocPanelEvents(panel, idx) {
     const loc = locationsDraft[idx];
+    const addrInput = panel.querySelector('.loc-addr-input');
+    const mapEl = panel.querySelector('.loc-map');
 
-    // Label input
     panel.querySelector('.loc-label-input').addEventListener('input', e => {
       loc.label = e.target.value;
       panel.querySelector('.loc-item-name').textContent = `📍 ${e.target.value || `Địa điểm ${idx+1}`}`;
     });
 
-    // Address input
-    panel.querySelector('.loc-addr-input').addEventListener('input', e => {
+    addrInput.addEventListener('input', e => {
       loc.address = e.target.value;
     });
 
-    // Note input
-    panel.querySelector('.loc-note-input').addEventListener('input', e => {
-      loc.note = e.target.value;
-    });
-
-    // Lat/Lng inputs
-    const latInput = panel.querySelector('.loc-lat-input');
-    const lngInput = panel.querySelector('.loc-lng-input');
-    const updateMapFromCoords = () => {
-      const lat = parseFloat(latInput.value);
-      const lng = parseFloat(lngInput.value);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        loc.lat = lat;
-        loc.lng = lng;
-        ensureFormMap(panel, idx, lat, lng);
-      }
-    };
-    latInput.addEventListener('change', updateMapFromCoords);
-    lngInput.addEventListener('change', updateMapFromCoords);
-
-    // GPS button
-    panel.querySelector('.loc-gps-btn').addEventListener('click', async () => {
-      const btn = panel.querySelector('.loc-gps-btn');
-      btn.disabled = true;
-      btn.textContent = 'Đang lấy GPS...';
-      try {
-        const { lat, lng } = await MapModule.getCurrentPosition();
-        loc.lat = lat; loc.lng = lng;
-        latInput.value = lat.toFixed(7);
-        lngInput.value = lng.toFixed(7);
-        ensureFormMap(panel, idx, lat, lng, true);
-
-        // Reverse geocode nếu có mạng
-        if (navigator.onLine) {
-          panel.querySelector('.loc-addr-input').placeholder = 'Đang tra cứu địa chỉ...';
-          try {
-            const addr = await MapModule.reverseGeocode(lat, lng);
-            if (addr && !loc.address) {
-              loc.address = addr;
-              panel.querySelector('.loc-addr-input').value = addr;
-            }
-          } catch(e) {
-            // Im lặng — giữ tọa độ, cho phép nhập địa chỉ thủ công
-          }
-          panel.querySelector('.loc-addr-input').placeholder = 'Số nhà, đường, phường, quận,...';
-        }
-        Toast.success('Đã lấy vị trí GPS');
-      } catch(err) {
-        Toast.error(err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg> Lấy GPS hiện tại`;
-      }
-    });
-
-    // Geocode button
-    const geocodeBtn = panel.querySelector('.loc-geocode-btn');
-    const geocodeList = panel.querySelector('.geocode-results-list');
-    geocodeBtn.addEventListener('click', () => doForwardGeocode(panel, idx));
-    panel.querySelector('.loc-addr-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); doForwardGeocode(panel, idx); }
-    });
-
-    async function doForwardGeocode(panel, idx) {
-      const q = panel.querySelector('.loc-addr-input').value.trim();
-      if (!q) { Toast.info('Nhập địa chỉ để tìm'); return; }
-      if (!navigator.onLine) { Toast.info('Cần kết nối Internet để tìm địa chỉ'); return; }
-      geocodeBtn.disabled = true;
-      geocodeList.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--text-sec);">Đang tìm...</div>';
-      geocodeList.classList.add('open');
-      try {
-        const results = await MapModule.forwardGeocode(q);
-        if (!results.length) {
-          geocodeList.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--danger);">Không tìm thấy địa chỉ</div>';
-          return;
-        }
-        geocodeList.innerHTML = results.map((r,i) => `
-          <div class="geocode-item" data-idx="${i}" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${Utils.escHtml(r.display_name)}">
-            ${Utils.escHtml(r.display_name)}
-          </div>`).join('');
-        geocodeList.querySelectorAll('.geocode-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const lat = parseFloat(item.dataset.lat);
-            const lon = parseFloat(item.dataset.lon);
-            const name = item.dataset.name;
-            loc.lat = lat; loc.lng = lon;
-            if (!loc.address) { loc.address = name; panel.querySelector('.loc-addr-input').value = name; }
-            panel.querySelector('.loc-lat-input').value = lat.toFixed(7);
-            panel.querySelector('.loc-lng-input').value = lon.toFixed(7);
-            ensureFormMap(panel, idx, lat, lon, true);
-            geocodeList.classList.remove('open');
-          });
-        });
-      } catch(err) {
-        geocodeList.innerHTML = `<div style="padding:10px;font-size:13px;color:var(--danger);">Lỗi: ${err.message}</div>`;
-      } finally {
-        geocodeBtn.disabled = false;
-      }
+    if (mapEl) {
+      mapEl.addEventListener('click', () => openLocationMapPopup(panel, idx));
     }
 
-    // Photo upload
+    if (loc.lat && loc.lng) {
+      setTimeout(() => ensureFormMap(panel, idx, loc.lat, loc.lng), 50);
+    }
+
+    async function openLocationMapPopup(panel, idx) {
+      const loc = locationsDraft[idx];
+      const initialLat = Number(loc.lat) || 10.7769;
+      const initialLng = Number(loc.lng) || 106.7009;
+      const body = `
+        <div class="loc-map-popup" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="loc-popup-address" type="text" value="${Utils.escHtml(loc.address || '')}" placeholder="Nhập địa chỉ để tìm" style="flex:1;min-width:0;"/>
+            <button class="btn btn-primary btn-sm" id="loc-popup-search">Tìm</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="loc-popup-gps">Lấy GPS hiện tại</button>
+            <div style="display:flex;gap:8px;flex:1;min-width:220px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;color:var(--text-sec);margin-bottom:4px;">Vĩ độ</div>
+                <input id="loc-popup-lat" type="text" value="${Number.isFinite(loc.lat) ? loc.lat.toFixed(7) : initialLat.toFixed(7)}"/>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;color:var(--text-sec);margin-bottom:4px;">Kinh độ</div>
+                <input id="loc-popup-lng" type="text" value="${Number.isFinite(loc.lng) ? loc.lng.toFixed(7) : initialLng.toFixed(7)}"/>
+              </div>
+            </div>
+          </div>
+          <div id="loc-popup-map" style="width:100%;height:260px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#eef4ff;"></div>
+        </div>
+      `;
+
+      Modal.open({
+        title: 'Chọn vị trí giao hàng',
+        body,
+        buttons: [{ label: 'Đóng', cls: 'btn-secondary' }]
+      });
+
+      const popupMapEl = document.getElementById('loc-popup-map');
+      const addrInput = document.getElementById('loc-popup-address');
+      const latInput = document.getElementById('loc-popup-lat');
+      const lngInput = document.getElementById('loc-popup-lng');
+      const searchBtn = document.getElementById('loc-popup-search');
+      const gpsBtn = document.getElementById('loc-popup-gps');
+
+      const setFromCoords = (lat, lng, addressValue = null) => {
+        const safeLat = Number(lat);
+        const safeLng = Number(lng);
+        if (!Number.isFinite(safeLat) || !Number.isFinite(safeLng)) return;
+        loc.lat = safeLat;
+        loc.lng = safeLng;
+        if (addressValue) {
+          loc.address = addressValue;
+          panel.querySelector('.loc-addr-input').value = addressValue;
+          addrInput.value = addressValue;
+        }
+        panel.querySelector('.loc-addr-input').value = loc.address || addrInput.value || '';
+        latInput.value = safeLat.toFixed(7);
+        lngInput.value = safeLng.toFixed(7);
+        ensureFormMap(panel, idx, safeLat, safeLng, true);
+      };
+
+      const map = new google.maps.Map(popupMapEl, {
+        center: { lat: initialLat, lng: initialLng },
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+        gestureHandling: 'greedy'
+      });
+
+      const marker = new google.maps.Marker({
+        map,
+        position: { lat: initialLat, lng: initialLng },
+        draggable: true,
+        animation: google.maps.Animation.DROP
+      });
+
+      marker.addListener('dragend', async () => {
+        const p = marker.getPosition();
+        const lat = p.lat();
+        const lng = p.lng();
+        setFromCoords(lat, lng);
+        try {
+          const addr = await MapModule.reverseGeocode(lat, lng);
+          if (addr) setFromCoords(lat, lng, addr);
+        } catch (e) {}
+      });
+
+      map.addListener('click', async (e) => {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        marker.setPosition({ lat, lng });
+        map.panTo({ lat, lng });
+        setFromCoords(lat, lng);
+        try {
+          const addr = await MapModule.reverseGeocode(lat, lng);
+          if (addr) setFromCoords(lat, lng, addr);
+        } catch (e) {}
+      });
+
+      searchBtn.addEventListener('click', async () => {
+        const q = addrInput.value.trim();
+        if (!q) {
+          Toast.info('Nhập địa chỉ để tìm');
+          return;
+        }
+        try {
+          const results = await MapModule.forwardGeocode(q);
+          if (!results.length) {
+            Toast.info('Không tìm thấy địa chỉ phù hợp');
+            return;
+          }
+          const first = results[0];
+          const lat = Number(first.lat);
+          const lng = Number(first.lon);
+          map.setCenter({ lat, lng });
+          marker.setPosition({ lat, lng });
+          setFromCoords(lat, lng, first.display_name);
+        } catch (err) {
+          Toast.error(err.message || 'Lỗi tìm địa chỉ');
+        }
+      });
+
+      gpsBtn.addEventListener('click', async () => {
+        try {
+          const { lat, lng } = await MapModule.getCurrentPosition();
+          map.setCenter({ lat, lng });
+          marker.setPosition({ lat, lng });
+          setFromCoords(lat, lng, loc.address || '');
+          const addr = await MapModule.reverseGeocode(lat, lng).catch(() => '');
+          if (addr) {
+            setFromCoords(lat, lng, addr);
+            addrInput.value = addr;
+          }
+          Toast.success('Đã lấy vị trí GPS');
+        } catch (err) {
+          Toast.error(err.message);
+        }
+      });
+
+      latInput.addEventListener('change', () => {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        map.setCenter({ lat, lng });
+        marker.setPosition({ lat, lng });
+        setFromCoords(lat, lng, addrInput.value.trim() || loc.address || '');
+      });
+
+      lngInput.addEventListener('change', () => {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        map.setCenter({ lat, lng });
+        marker.setPosition({ lat, lng });
+        setFromCoords(lat, lng, addrInput.value.trim() || loc.address || '');
+      });
+    }
+
     const uploadArea = panel.querySelector('.loc-upload-area');
     const photoInput = panel.querySelector('.loc-photo-input');
     uploadArea.addEventListener('click', () => photoInput.click());
@@ -2829,28 +2213,37 @@ const FormModule = (() => {
     }
   }
 
-  function ensureFormMap(panel, idx, lat, lng, fly = false) {
+  async function ensureFormMap(panel, idx, lat, lng, fly = false) {
     const mapId = `form-map-${idx}`;
     const mapEl = panel.querySelector(`#${mapId}`);
     if (!mapEl) return;
 
-    // Reset content nếu đang hiện placeholder text
     if (mapEl.querySelector('.map-offline-msg')) {
       mapEl.innerHTML = '';
     }
 
-    // Lấy hoặc tạo instance
-    if (!mapEl._leafletMap) {
-      try {
-        const map = L.map(mapEl, { center: [lat, lng], zoom: 17 });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          maxZoom: 19
-        }).addTo(map);
+    const ready = await MapModule.ensureGoogleMapsReady();
+    if (!ready || !window.google || !window.google.maps) {
+      mapEl.innerHTML = `<div class="map-offline-msg">Google Maps chưa sẵn sàng. Vui lòng nhập API key trong Cài đặt.</div>`;
+      return;
+    }
 
-        // Click bản đồ để di chuyển marker
-        map.on('click', async (e) => {
-          const { lat: clat, lng: clng } = e.latlng;
+    if (!mapEl._gmMap) {
+      try {
+        const map = new google.maps.Map(mapEl, {
+          center: { lat, lng },
+          zoom: 17,
+          disableDefaultUI: false,
+          mapTypeControl: true,
+          streetViewControl: true,
+          fullscreenControl: true,
+          zoomControl: true,
+          gestureHandling: 'greedy'
+        });
+
+        map.addListener('click', async (e) => {
+          const clat = e.latLng.lat();
+          const clng = e.latLng.lng();
           locationsDraft[idx].lat = clat;
           locationsDraft[idx].lng = clng;
           MapModule.setMarker(map, clat, clng, true, (la, lo) => {
@@ -2862,7 +2255,6 @@ const FormModule = (() => {
           panel.querySelector('.loc-lat-input').value = clat.toFixed(7);
           panel.querySelector('.loc-lng-input').value = clng.toFixed(7);
 
-          // Auto reverse geocode
           if (navigator.onLine && !locationsDraft[idx].address) {
             try {
               const addr = await MapModule.reverseGeocode(clat, clng);
@@ -2870,7 +2262,7 @@ const FormModule = (() => {
                 locationsDraft[idx].address = addr;
                 panel.querySelector('.loc-addr-input').value = addr;
               }
-            } catch(e) {}
+            } catch (e) {}
           }
         });
 
@@ -2881,13 +2273,13 @@ const FormModule = (() => {
           panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
         });
 
-        mapEl._leafletMap = map;
-      } catch(err) {
+        mapEl._gmMap = map;
+      } catch (err) {
         mapEl.innerHTML = `<div class="map-offline-msg">Không tải được bản đồ (cần Internet)</div>`;
         return;
       }
     } else {
-      MapModule.setMarker(mapEl._leafletMap, lat, lng, true, (la, lo) => {
+      MapModule.setMarker(mapEl._gmMap, lat, lng, true, (la, lo) => {
         locationsDraft[idx].lat = la;
         locationsDraft[idx].lng = lo;
         panel.querySelector('.loc-lat-input').value = la.toFixed(7);
@@ -2896,9 +2288,10 @@ const FormModule = (() => {
     }
 
     if (fly) {
-      mapEl._leafletMap.flyTo([lat, lng], 17, { animate: true });
+      MapModule.flyTo(mapEl._gmMap, lat, lng, 17);
     } else {
-      mapEl._leafletMap.setView([lat, lng], 17);
+      mapEl._gmMap.panTo({ lat, lng });
+      mapEl._gmMap.setZoom(17);
     }
   }
 
@@ -2933,11 +2326,10 @@ const FormModule = (() => {
   }
 
   function destroyFormMap() {
-    // Hủy tất cả Leaflet maps trong form
     document.querySelectorAll('[id^="form-map-"]').forEach(el => {
-      if (el._leafletMap) {
-        el._leafletMap.remove();
-        el._leafletMap = null;
+      if (el._gmMap) {
+        el._gmMap = null;
+        el.innerHTML = '';
       }
     });
   }
@@ -3059,7 +2451,7 @@ const BackupModule = (() => {
   async function refreshStats() {
     try {
       const all = await DB.getAllCustomers();
-      document.getElementById('backup-stats').textContent = `${all.length} khách hàng trong cơ sở dữ liệu`;
+
     } catch(e) {}
   }
 
@@ -3166,7 +2558,41 @@ const BackupModule = (() => {
 // MODULE: SettingsModule
 // ============================================================
 const SettingsModule = (() => {
+  async function getGoogleApiKey() {
+    try {
+      const saved = await DB.getSetting('googleMapsApiKey', localStorage.getItem('googleMapsApiKey') || '');
+      return saved || localStorage.getItem('googleMapsApiKey') || '';
+    } catch (err) {
+      return localStorage.getItem('googleMapsApiKey') || '';
+    }
+  }
+
+  async function saveGoogleApiKey() {
+    const input = document.getElementById('google-maps-api-key');
+    if (!input) return;
+
+    const key = (input.value || '').trim();
+    if (!key) {
+      Toast.info('Nhập API key Google Maps trước khi lưu');
+      return;
+    }
+
+    try {
+      await DB.saveSetting('googleMapsApiKey', key);
+      localStorage.setItem('googleMapsApiKey', key);
+      input.value = key;
+      Toast.success('Đã lưu API key Google Maps');
+    } catch (err) {
+      Toast.error('Lỗi lưu API key: ' + err.message);
+    }
+  }
+
   async function init() {
+    const apiInput = document.getElementById('google-maps-api-key');
+    if (apiInput) {
+      apiInput.value = await getGoogleApiKey();
+    }
+
     // Storage info
     try {
       const info = await DB.getStorageInfo();
@@ -3221,7 +2647,7 @@ const SettingsModule = (() => {
     });
   }
 
-  return { init, checkUpdate, clearAllData };
+  return { init, getGoogleApiKey, saveGoogleApiKey, checkUpdate, clearAllData };
 })();
 
 // ============================================================
@@ -3281,6 +2707,7 @@ async function initApp() {
   // Settings
   document.getElementById('btn-update-sw').addEventListener('click', () => SettingsModule.checkUpdate());
   document.getElementById('btn-clear-all').addEventListener('click', () => SettingsModule.clearAllData());
+  document.getElementById('btn-save-google-key').addEventListener('click', () => SettingsModule.saveGoogleApiKey());
 
   // Search
   CustomerModule.initSearchListeners();
