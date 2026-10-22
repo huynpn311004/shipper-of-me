@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Nền tròn trung tính -->
+  <rect width="512" height="512" rx="96" fill="#EFF6FF"/>
+  <!-- Biểu tượng hộp giao hàng cách điệu -->
+  <rect x="120" y="200" width="272" height="200" rx="16" fill="#2563EB"/>
+  <!-- Nắp hộp -->
+  <path d="M104 200 L256 120 L408 200 Z" fill="#1D4ED8"/>
+  <!-- Dây buộc -->
+  <rect x="240" y="120" width="32" height="280" rx="8" fill="#BFDBFE"/>
+  <!-- Dấu check nhỏ -->
+  <path d="M188 300 L230 340 L324 260" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

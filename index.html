@@ -1,0 +1,3332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Giao Hàng"/>
+  <meta name="description" content="Ứng dụng sổ giao hàng & quản lý khách hàng dành cho shipper"/>
+  <meta name="theme-color" content="#2563EB"/>
+  <title>Sổ Giao Hàng</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icon.svg" type="image/svg+xml"/>
+  <link rel="apple-touch-icon" href="icon.svg"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* =========================================================
+       CSS DESIGN SYSTEM — Sổ Giao Hàng
+       Màu chủ đạo: Sapphire Blue #2563EB
+    ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #2563EB;
+      --blue-dark:   #1D4ED8;
+      --blue-light:  #EFF6FF;
+      --blue-mid:    #BFDBFE;
+
+      --bg:          #F8FAFC;
+      --surface:     #FFFFFF;
+      --text:        #1E293B;
+      --text-sec:    #64748B;
+      --border:      #E2E8F0;
+      --danger:      #DC2626;
+      --danger-bg:   #FEF2F2;
+      --success:     #16A34A;
+      --success-bg:  #F0FDF4;
+
+      --radius:      13px;
+      --radius-sm:   8px;
+      --radius-lg:   18px;
+
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
+      --shadow-md:   0 4px 12px rgba(0,0,0,.10);
+
+      --topbar-h:    56px;
+      --bottomnav-h: 60px;
+
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bot:    env(safe-area-inset-bottom, 0px);
+    }
+
+    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* --- SCROLLBAR --- */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ---- TOP BAR ---- */
+    /* ---- TOP BAR ---- */
+    #topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: calc(var(--topbar-h) + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: var(--blue);
+      display: flex; align-items: center; justify-content: space-between;
+      padding-left: 16px; padding-right: 16px;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .topbar-brand-icon {
+      font-size: 20px; line-height: 1;
+    }
+    #topbar-title {
+      font-size: 18px; font-weight: 700; color: #fff;
+      letter-spacing: -.2px;
+    }
+    #topbar-clock {
+      font-size: 12px; color: rgba(255,255,255,.9); white-space: nowrap;
+      font-weight: 500; line-height: 1.3; text-align: right;
+    }
+    .btn-icon {
+      width: 40px; height: 40px; border: none; background: transparent;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-sm); color: #fff; flex-shrink: 0;
+      transition: background .15s;
+    }
+    .btn-icon:hover, .btn-icon:active { background: rgba(255,255,255,.15); }
+
+    /* ---- MAIN CONTENT ---- */
+    #main {
+      padding-top: calc(var(--topbar-h) + var(--safe-top));
+      padding-bottom: calc(var(--bottomnav-h) + var(--safe-bot));
+      min-height: 100dvh;
+    }
+
+    /* ---- BOTTOM NAV ---- */
+    #bottomnav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      height: calc(var(--bottomnav-h) + var(--safe-bot));
+      padding-bottom: var(--safe-bot);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: stretch;
+      box-shadow: 0 -2px 10px rgba(0,0,0,.06);
+    }
+    .bn-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      cursor: pointer; border: none; background: transparent;
+      color: var(--text-sec); font-size: 11.5px; font-weight: 500;
+      transition: color .15s, transform .1s; padding: 2px 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bn-item:active { transform: scale(0.95); }
+    .bn-item.active {
+      color: var(--blue);
+      font-weight: 700;
+    }
+    .bn-item.active svg {
+      stroke-width: 2.3;
+    }
+    .bn-item svg { flex-shrink: 0; }
+
+    /* ---- SCREENS ---- */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ---- SEARCH SECTION ---- */
+    .search-container {
+      padding: 16px 16px 0;
+      position: relative;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    #search-input,
+    #list-search {
+      width: 100%; height: 50px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 44px 0 46px;
+      font-size: 15px; color: var(--text);
+      background: var(--surface);
+      outline: none;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+      -webkit-appearance: none;
+      appearance: none;
+      box-sizing: border-box;
+      display: block;
+    }
+    #search-input:focus,
+    #list-search:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+    #search-input::placeholder,
+    #list-search::placeholder {
+      color: var(--text-sec);
+      font-size: 14.5px;
+    }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-sec); pointer-events: none;
+      z-index: 2;
+    }
+    #search-clear,
+    #list-search-clear {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border: none; background: transparent;
+      cursor: pointer; border-radius: 50%; display: none;
+      align-items: center; justify-content: center; color: var(--text-sec);
+      z-index: 2;
+      transition: background .15s, color .15s;
+    }
+    #search-clear:hover,
+    #list-search-clear:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    #search-clear.visible,
+    #list-search-clear.visible { display: flex; }
+
+    input[type="search"]::-webkit-search-decoration,
+    input[type="search"]::-webkit-search-cancel-button,
+    input[type="search"]::-webkit-search-results-button,
+    input[type="search"]::-webkit-search-results-decoration {
+      -webkit-appearance: none;
+    }
+
+    /* Dropdown gợi ý */
+    #search-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 16px; right: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-md);
+      z-index: 50; max-height: 280px; overflow-y: auto;
+      display: none;
+    }
+    #search-dropdown.open { display: block; }
+    .suggest-item {
+      padding: 13px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover, .suggest-item:active { background: var(--blue-light); }
+    .suggest-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .suggest-phone { font-size: 13px; color: var(--text-sec); margin-top: 1px; }
+    .suggest-addr { font-size: 12px; color: var(--text-sec); margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ---- CUSTOMER CARD ---- */
+    #customer-detail { padding: 16px; }
+
+    .cust-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 18px;
+      box-shadow: var(--shadow-sm); margin-bottom: 14px;
+    }
+    .cust-name {
+      font-size: 24px; font-weight: 700; color: var(--text);
+      margin-bottom: 6px; line-height: 1.2;
+    }
+    .cust-phone-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .cust-phone {
+      font-size: 20px; font-weight: 600; color: var(--blue);
+      text-decoration: none;
+    }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--blue-light); color: var(--blue);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 13px; font-weight: 500;
+    }
+    .tag-gray { background: var(--bg); color: var(--text-sec); }
+    .cust-stats {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .cust-note {
+      font-size: 14px; color: var(--text-sec);
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 10px 12px; margin-top: 8px; line-height: 1.5;
+    }
+
+    /* ---- ACTION BUTTONS ---- */
+    .action-row {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .btn {
+      height: 48px; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      border: none; display: inline-flex; align-items: center;
+      justify-content: center; gap: 7px; padding: 0 18px;
+      transition: background .15s, transform .1s, box-shadow .15s;
+      white-space: nowrap; text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 2px 6px rgba(37,99,235,.3);
+    }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-secondary {
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--bg); }
+    .btn-danger {
+      background: var(--danger-bg); color: var(--danger);
+      border: 1px solid #FECACA;
+    }
+    .btn-danger:hover { background: #FEE2E2; }
+    .btn-success {
+      background: var(--success-bg); color: var(--success);
+      border: 1px solid #BBF7D0;
+    }
+    .btn-sm { height: 38px; font-size: 13px; padding: 0 12px; }
+    .btn-full { width: 100%; }
+
+    /* ---- ADDRESS TABS ---- */
+    .addr-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+      margin-bottom: 12px; scrollbar-width: none;
+    }
+    .addr-tabs::-webkit-scrollbar { display: none; }
+    .addr-tab {
+      flex-shrink: 0; padding: 8px 14px; border-radius: 20px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-sec);
+      transition: all .15s; white-space: nowrap;
+    }
+    .addr-tab.active {
+      background: var(--blue); color: #fff; border-color: var(--blue);
+    }
+
+    /* ---- MAP ---- */
+    #map {
+      height: 240px; border-radius: var(--radius); overflow: hidden;
+      border: 1px solid var(--border); margin-bottom: 14px;
+      background: var(--bg);
+    }
+    #map-form { height: 220px; }
+    .map-offline-msg {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-sec); font-size: 14px;
+      flex-direction: column; gap: 8px;
+    }
+
+    /* ---- PHOTOS ---- */
+    .photo-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 8px; margin-bottom: 14px;
+    }
+    .photo-thumb {
+      aspect-ratio: 1; border-radius: var(--radius-sm);
+      object-fit: cover; cursor: pointer; border: 1px solid var(--border);
+      transition: transform .15s;
+    }
+    .photo-thumb:hover { transform: scale(1.04); }
+
+    /* ---- LIGHTBOX ---- */
+    #lightbox {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.92);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 100%; max-height: 80dvh;
+      object-fit: contain; border-radius: var(--radius-sm);
+    }
+    #lightbox-close {
+      position: absolute; top: calc(16px + var(--safe-top)); right: 16px;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,.2); color: #fff;
+      border: none; cursor: pointer; font-size: 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lb-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,.2); color: #fff; border: none;
+      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    #lb-prev { left: 12px; }
+    #lb-next { right: 12px; }
+    #lb-counter {
+      position: absolute; bottom: calc(20px + var(--safe-bot));
+      color: rgba(255,255,255,.8); font-size: 14px;
+    }
+    #lightbox-del {
+      position: absolute; top: calc(16px + var(--safe-top)); left: 16px;
+      background: rgba(220,38,38,.7); color: #fff; border: none;
+      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ---- ADDRESS INFO ---- */
+    .addr-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+    }
+    .addr-label { font-size: 12px; color: var(--text-sec); font-weight: 500;
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .addr-text { font-size: 15px; color: var(--text); line-height: 1.4; }
+    .addr-coords { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 60px 24px; text-align: center;
+    }
+    .empty-icon { color: var(--border); margin-bottom: 16px; }
+    .empty-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
+
+    /* ---- TOAST ---- */
+    #toast-container {
+      position: fixed; bottom: calc(var(--bottomnav-h) + var(--safe-bot) + 12px);
+      left: 16px; right: 16px; z-index: 400;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      padding: 13px 16px; border-radius: var(--radius);
+      font-size: 15px; font-weight: 500;
+      box-shadow: var(--shadow-md); animation: slideUp .25s ease;
+      pointer-events: all;
+    }
+    .toast-success { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
+    .toast-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #FECACA; }
+    .toast-info { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* ---- MODAL ---- */
+    #modal-overlay {
+      position: fixed; inset: 0; z-index: 250;
+      background: rgba(0,0,0,.45);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      padding: 24px 20px;
+      padding-bottom: calc(24px + var(--safe-bot));
+      width: 100%; max-width: 560px;
+      max-height: 90dvh; overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--text);
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* ---- FORM ---- */
+    .form-section { padding: 16px; }
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block; font-size: 15px; font-weight: 600;
+      color: var(--text); margin-bottom: 7px;
+    }
+    label span.req { color: var(--danger); }
+    input[type="text"], input[type="tel"], textarea, select {
+      width: 100%; padding: 13px 14px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 16px; color: var(--text); background: var(--surface);
+      font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    select { cursor: pointer; }
+    .field-hint { font-size: 13px; color: var(--text-sec); margin-top: 5px; }
+    .field-error { font-size: 13px; color: var(--danger); margin-top: 5px; }
+
+    /* GPS và địa chỉ */
+    .input-with-btn { display: flex; gap: 8px; }
+    .input-with-btn input { flex: 1; }
+    .coord-row {
+      display: flex; gap: 8px;
+    }
+    .coord-row .form-group { flex: 1; margin-bottom: 0; }
+
+    /* Upload ảnh */
+    .photo-upload-area {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 20px; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; color: var(--text-sec);
+    }
+    .photo-upload-area:hover { border-color: var(--blue); background: var(--blue-light); }
+    .photo-upload-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px; margin-top: 12px;
+    }
+    .photo-preview-item {
+      position: relative; aspect-ratio: 1;
+    }
+    .photo-preview-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: var(--radius-sm); border: 1px solid var(--border);
+    }
+    .photo-remove-btn {
+      position: absolute; top: -6px; right: -6px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--danger); color: #fff; border: 2px solid #fff;
+      font-size: 14px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; line-height: 1;
+    }
+
+    /* ---- LIST SCREEN ---- */
+    .list-header {
+      padding: 16px 16px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+    .list-title {
+      font-size: 22px; font-weight: 700; color: var(--text);
+      letter-spacing: -.3px; line-height: 1.2;
+    }
+    .list-count {
+      font-size: 13px; color: var(--text-sec); font-weight: 500; margin-top: 2px;
+    }
+    .customer-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 15px;
+      margin: 0 16px 12px; box-shadow: var(--shadow-sm);
+      transition: border-color .18s, box-shadow .18s, transform .12s;
+      cursor: pointer;
+    }
+    .customer-item:hover {
+      border-color: var(--blue-mid);
+      box-shadow: 0 4px 14px rgba(37,99,235,.1);
+    }
+    .customer-item:active {
+      transform: scale(0.995);
+    }
+    .ci-top { display: flex; align-items: flex-start; gap: 12px; }
+    .ci-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--blue-light); color: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+      border: 1px solid var(--blue-mid);
+    }
+    .ci-info { flex: 1; min-width: 0; }
+    .ci-name-row {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+      margin-bottom: 3px;
+    }
+    .ci-name {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ci-phone {
+      font-size: 14px; color: var(--blue); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px;
+      text-decoration: none; padding: 2px 7px; border-radius: 5px;
+      background: var(--blue-light); flex-shrink: 0;
+      transition: background .15s;
+    }
+    .ci-phone:hover {
+      background: var(--blue-mid);
+    }
+    .ci-addr {
+      font-size: 13px; color: var(--text-sec); margin-top: 5px;
+      display: flex; align-items: flex-start; gap: 5px; line-height: 1.4;
+    }
+    .ci-addr-text {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    }
+    .ci-meta {
+      display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .ci-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 11.5px; font-weight: 500;
+      background: #F1F5F9; color: #475569;
+    }
+    .ci-badge-blue {
+      background: var(--blue-light); color: var(--blue); font-weight: 600;
+    }
+    .ci-badge-success {
+      background: var(--success-bg); color: var(--success); font-weight: 600;
+    }
+    .ci-actions {
+      display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .ci-actions .btn {
+      height: 38px; font-size: 13px; font-weight: 600;
+      border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 0 12px;
+    }
+
+    /* ---- SORT BAR ---- */
+    .sort-bar {
+      display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 14px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sort-bar::-webkit-scrollbar { display: none; }
+    .sort-btn {
+      flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-sec);
+      transition: all .15s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .sort-btn:hover {
+      background: var(--blue-light);
+      color: var(--blue);
+      border-color: var(--blue-mid);
+    }
+    .sort-btn.active {
+      background: var(--blue); color: #fff; border-color: var(--blue);
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(37,99,235,.25);
+    }
+
+    /* ---- BACKUP SCREEN ---- */
+    .backup-section {
+      padding: 16px;
+    }
+    .backup-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .backup-icon {
+      width: 48px; height: 48px; background: var(--blue-light);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      color: var(--blue); margin-bottom: 14px;
+    }
+    .backup-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .backup-card p { font-size: 14px; color: var(--text-sec); line-height: 1.5; margin-bottom: 14px; }
+
+    /* ---- SETTINGS SCREEN ---- */
+    .settings-section { padding: 16px; }
+    .setting-group { margin-bottom: 20px; }
+    .setting-group-title {
+      font-size: 13px; font-weight: 600; color: var(--text-sec);
+      text-transform: uppercase; letter-spacing: .5px;
+      margin-bottom: 10px;
+    }
+    .setting-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-item-label { font-size: 16px; font-weight: 500; }
+    .setting-item-sub { font-size: 13px; color: var(--text-sec); margin-top: 2px; }
+
+    /* ---- LOCATION EDIT ---- */
+    .loc-item {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+    }
+    .loc-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .loc-item-name { font-size: 15px; font-weight: 600; }
+    .loc-item-addr { font-size: 13px; color: var(--text-sec); }
+
+    /* ---- PROGRESS / LOADING ---- */
+    .loading-spinner {
+      width: 28px; height: 28px; border: 3px solid var(--border);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(248,250,252,.8);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px; display: none;
+    }
+    .loading-overlay.open { display: flex; }
+    .loading-overlay p { font-size: 15px; color: var(--text-sec); font-weight: 500; }
+
+    /* ---- DELIVERY HISTORY ---- */
+    .history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--blue); flex-shrink: 0;
+    }
+    .history-time { font-size: 14px; color: var(--text-sec); }
+
+    /* ---- UPDATE BANNER ---- */
+    #update-banner {
+      position: fixed; bottom: calc(var(--bottomnav-h) + var(--safe-bot) + 12px);
+      left: 16px; right: 16px; z-index: 450;
+      background: var(--blue); color: #fff;
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--shadow-md); display: none;
+    }
+    #update-banner.show { display: flex; }
+    #update-banner p { flex: 1; font-size: 14px; font-weight: 500; }
+
+    /* ---- UTILITY ---- */
+    .section-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .gap-8 { gap: 8px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .fw-600 { font-weight: 600; }
+    .text-sec { color: var(--text-sec); }
+    .text-small { font-size: 13px; }
+
+    /* Responsive: ẩn clock text trên màn hình rất nhỏ */
+    @media (max-width: 340px) {
+      #topbar-clock .clock-date { display: none; }
+    }
+
+    /* Form địa chỉ panel */
+    .addr-panel { display: none; }
+    .addr-panel.open { display: block; }
+
+    /* Geocoding result list */
+    #geocode-results {
+      margin-top: 8px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; display: none;
+    }
+    #geocode-results.open { display: block; }
+    .geocode-item {
+      padding: 11px 14px; cursor: pointer; font-size: 14px;
+      border-bottom: 1px solid var(--border); line-height: 1.4;
+      color: var(--text); transition: background .15s;
+    }
+    .geocode-item:last-child { border-bottom: none; }
+    .geocode-item:hover { background: var(--blue-light); }
+
+    /* Warning note */
+    .note-warning {
+      background: #FFF7ED; border: 1px solid #FED7AA;
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-size: 13px; color: #9A3412; line-height: 1.5; margin-bottom: 14px;
+    }
+    .note-info {
+      background: var(--blue-light); border: 1px solid var(--blue-mid);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-size: 13px; color: var(--blue); line-height: 1.5; margin-bottom: 14px;
+    }
+
+    /* Screen page title */
+    .page-title {
+      padding: 20px 16px 4px;
+      font-size: 24px; font-weight: 700; color: var(--text);
+    }
+    .page-sub {
+      padding: 0 16px 16px;
+      font-size: 14px; color: var(--text-sec);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===================== TOP BAR ===================== -->
+<header id="topbar" role="banner">
+  <div class="topbar-brand">
+    <span class="topbar-brand-icon">📦</span>
+    <span id="topbar-title">Sổ Giao Hàng</span>
+  </div>
+  <div id="topbar-clock" aria-live="polite">
+    <div class="clock-time" id="clock-time">--:--</div>
+    <div class="clock-date" id="clock-date">--/--/----</div>
+  </div>
+</header>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main id="main" role="main">
+
+  <!-- ========== SCREEN: HOME ========== -->
+  <section id="screen-home" class="screen active">
+    <div class="search-container">
+      <div class="search-wrap">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="search-input" autocomplete="off" autocorrect="off"
+               placeholder="Nhập tên hoặc số điện thoại khách hàng..."
+               aria-label="Tìm kiếm khách hàng" inputmode="search"/>
+        <button id="search-clear" aria-label="Xóa tìm kiếm">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="search-dropdown" role="listbox" aria-label="Gợi ý khách hàng"></div>
+    </div>
+
+    <div id="customer-detail">
+      <!-- Empty state mặc định -->
+      <div class="empty-state" id="home-empty">
+        <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="empty-title">Tìm kiếm khách hàng</div>
+        <div class="empty-sub">Nhập tên hoặc số điện thoại để tìm khách hàng đã lưu</div>
+      </div>
+      <!-- Nội dung khách hàng sẽ được render ở đây -->
+      <div id="customer-content" style="display:none;"></div>
+    </div>
+  </section>
+
+  <!-- ========== SCREEN: ADD/EDIT ========== -->
+  <section id="screen-add" class="screen">
+    <div class="page-title" id="add-screen-title">Thêm Khách Hàng</div>
+    <div class="page-sub">Điền thông tin để lưu hồ sơ khách hàng</div>
+
+    <div class="form-section">
+      <!-- Thông tin cơ bản -->
+      <div class="section-title">Thông Tin Cơ Bản</div>
+
+      <div class="form-group">
+        <label for="f-phone">Số điện thoại <span class="req">*</span></label>
+        <input type="tel" id="f-phone" inputmode="tel" autocomplete="tel"
+               placeholder="Ví dụ: 0901234567"/>
+        <div class="field-hint" id="f-phone-hint"></div>
+        <div class="field-error" id="f-phone-error" style="display:none;"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="f-name">Họ và tên</label>
+        <input type="text" id="f-name" autocomplete="name"
+               placeholder="Tên khách hàng"/>
+      </div>
+
+      <div class="form-group">
+        <label for="f-note">Ghi chú chung</label>
+        <textarea id="f-note" rows="3"
+                  placeholder="Ghi chú về khách hàng (thói quen, yêu cầu đặc biệt,...)"></textarea>
+      </div>
+
+      <!-- Danh sách địa điểm giao hàng -->
+      <div class="section-title" style="margin-top:8px;">
+        Địa Điểm Giao Hàng
+      </div>
+      <div id="locations-editor"></div>
+
+      <button class="btn btn-secondary btn-full mt-8" id="btn-add-location">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm địa điểm giao hàng
+      </button>
+
+      <div style="height:20px;"></div>
+      <div class="action-row">
+        <button class="btn btn-primary" id="btn-save-customer" style="flex:1;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Lưu Khách Hàng
+        </button>
+        <button class="btn btn-secondary" id="btn-cancel-add">Hủy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SCREEN: LIST ========== -->
+  <section id="screen-list" class="screen">
+    <div class="list-header">
+      <div>
+        <div class="list-title">Danh Sách Khách Hàng</div>
+        <div class="list-count" id="list-count">0 khách hàng</div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-go-add-from-list">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm mới
+      </button>
+    </div>
+
+    <div class="search-container" style="padding-bottom:12px;">
+      <div class="search-wrap">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="list-search" autocomplete="off"
+               placeholder="Tìm theo tên, SĐT, địa chỉ..." aria-label="Lọc danh sách"/>
+        <button id="list-search-clear" aria-label="Xóa bộ lọc" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="sort-bar">
+      <button class="sort-btn active" data-sort="name">Tên A-Z</button>
+      <button class="sort-btn" data-sort="created">Mới tạo</button>
+      <button class="sort-btn" data-sort="updated">Mới cập nhật</button>
+      <button class="sort-btn" data-sort="delivery">Giao gần nhất</button>
+    </div>
+
+    <div id="customer-list"></div>
+  </section>
+
+  <!-- ========== SCREEN: SETTINGS ========== -->
+  <section id="screen-settings" class="screen">
+    <div class="page-title">Cài Đặt</div>
+    <div class="page-sub">Quản lý sao lưu, thiết bị và cấu hình ứng dụng</div>
+
+    <div class="settings-section">
+      <!-- Group: Sao Lưu & Khôi Phục -->
+      <div class="setting-group">
+        <div class="setting-group-title">Sao Lưu &amp; Khôi Phục Dữ Liệu</div>
+
+        <div class="note-warning" style="margin-bottom:12px;">
+          ⚠️ Dữ liệu lưu hoàn toàn trên thiết bị của bạn, không tự đồng bộ lên server. Hãy sao lưu định kỳ để tránh mất dữ liệu khi xóa cache trình duyệt hoặc đổi thiết bị.
+        </div>
+
+        <div class="backup-card">
+          <div class="backup-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h3>Xuất File Sao Lưu</h3>
+          <p>Tải về file JSON chứa toàn bộ hồ sơ khách hàng, địa chỉ, ảnh và lịch sử giao hàng.</p>
+          <div id="backup-stats" class="text-sec text-small" style="margin-bottom:14px;font-size:13px;"></div>
+          <button class="btn btn-primary btn-full" id="btn-export">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Tải File Sao Lưu (.JSON)
+          </button>
+        </div>
+
+        <div class="backup-card" style="margin-top:12px;">
+          <div class="backup-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h3>Khôi Phục Từ File Sao Lưu</h3>
+          <p>Chọn file JSON đã xuất trước đó để khôi phục hoặc chuyển dữ liệu sang thiết bị mới.</p>
+          <input type="file" id="restore-file" accept=".json" style="display:none;" aria-label="Chọn file sao lưu"/>
+          <button class="btn btn-secondary btn-full" id="btn-import">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Chọn File Khôi Phục
+          </button>
+        </div>
+      </div>
+
+      <!-- Group: Ứng Dụng -->
+      <div class="setting-group" style="margin-top:20px;">
+        <div class="setting-group-title">Thông Tin Ứng Dụng</div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Phiên bản</div>
+            <div class="setting-item-sub">Sổ Giao Hàng v1.2.0 (PWA Offline)</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Lưu trữ</div>
+            <div class="setting-item-sub" id="storage-info">Đang tính toán...</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Service Worker</div>
+            <div class="setting-item-sub" id="sw-status">Đang kiểm tra...</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-update-sw">Kiểm tra</button>
+        </div>
+      </div>
+
+      <!-- Group: Bản Đồ & GPS -->
+      <div class="setting-group">
+        <div class="setting-group-title">Bản Đồ &amp; Định Vị</div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Tile bản đồ</div>
+            <div class="setting-item-sub">OpenStreetMap &amp; Leaflet (cần Internet)</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Geocoding</div>
+            <div class="setting-item-sub">Nominatim OSM (cần Internet)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group: Quyền Riêng Tư -->
+      <div class="setting-group">
+        <div class="setting-group-title">Quyền Riêng Tư</div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">Dữ liệu khách hàng</div>
+            <div class="setting-item-sub">Chỉ lưu trên thiết bị này, không gửi lên server</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-item-label">IndexedDB</div>
+            <div class="setting-item-sub">Lưu trữ nội bộ an toàn trên trình duyệt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group: Dữ Liệu -->
+      <div class="setting-group">
+        <div class="setting-group-title">Quản Lý Bộ Nhớ</div>
+        <button class="btn btn-danger btn-full" id="btn-clear-all">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          Xóa Toàn Bộ Dữ Liệu (Reset)
+        </button>
+      </div>
+
+      <div class="note-info" style="margin-top:12px;">
+        💡 Để cài app ra màn hình chính điện thoại:<br/>
+        • <strong>Android / Chrome</strong>: Bấm dấu 3 chấm góc trên → "Cài đặt ứng dụng" / "Thêm vào màn hình chính"<br/>
+        • <strong>iPhone / Safari</strong>: Bấm nút Chia sẻ (hình vuông mũi tên lên) → "Thêm vào MH chính"
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== BOTTOM NAV ===================== -->
+<nav id="bottomnav" aria-label="Điều hướng chính">
+  <button class="bn-item active" data-screen="home" aria-label="Tra cứu">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Tra Cứu</span>
+  </button>
+  <button class="bn-item" data-screen="add" aria-label="Thêm khách hàng">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>Thêm</span>
+  </button>
+  <button class="bn-item" data-screen="list" aria-label="Danh sách">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Danh Sách</span>
+  </button>
+  <button class="bn-item" data-screen="settings" aria-label="Cài đặt">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Cài Đặt</span>
+  </button>
+</nav>
+
+<!-- ===================== TOAST ===================== -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ===================== LOADING OVERLAY ===================== -->
+<div class="loading-overlay" id="loading-overlay" role="status" aria-label="Đang xử lý">
+  <div class="loading-spinner"></div>
+  <p id="loading-text">Đang xử lý...</p>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="modal-box">
+    <h2 class="modal-title" id="modal-title">Xác nhận</h2>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Xem ảnh">
+  <button id="lightbox-del" aria-label="Xóa ảnh">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+  </button>
+  <button id="lightbox-close" aria-label="Đóng">✕</button>
+  <button class="lb-nav" id="lb-prev" aria-label="Ảnh trước">‹</button>
+  <img id="lightbox-img" src="" alt="Ảnh khách hàng"/>
+  <button class="lb-nav" id="lb-next" aria-label="Ảnh sau">›</button>
+  <div id="lb-counter"></div>
+</div>
+
+<!-- ===================== UPDATE BANNER ===================== -->
+<div id="update-banner" role="alert">
+  <p>Có bản cập nhật mới. Tải lại để dùng phiên bản mới nhất.</p>
+  <button class="btn btn-sm" id="btn-update-reload" style="background:rgba(255,255,255,.2);color:#fff;border:none;flex-shrink:0;">Tải lại</button>
+</div>
+
+<!-- ===================== LEAFLET JS ===================== -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqE=" crossorigin=""></script>
+
+<script>
+'use strict';
+// ============================================================
+// SỔ GIAO HÀNG — Main Application JavaScript
+// ============================================================
+
+// ============================================================
+// MODULE: Utilities
+// ============================================================
+const Utils = (() => {
+  // Tạo UUID v4
+  function uuid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  // Chuẩn hóa số điện thoại: xóa khoảng trắng, dấu '-', '.'
+  function normalizePhone(phone) {
+    return phone.replace(/[\s\-\.\(\)]/g, '');
+  }
+
+  // Format ngày giờ hiển thị
+  function fmtDateTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // Format ngày ngắn
+  function fmtDate(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  }
+
+  // Lấy tên viết tắt cho avatar
+  function initials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length-1].charAt(0)).toUpperCase();
+  }
+
+  // Escape HTML
+  function escHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Debounce
+  function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  // Đọc File → ArrayBuffer
+  function readFileAsArrayBuffer(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(fr.error);
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  // Đọc File → Text
+  function readFileAsText(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(fr.error);
+      fr.readAsText(file, 'utf-8');
+    });
+  }
+
+  // Blob → Base64
+  function blobToBase64(blob) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result); // data URL: "data:image/jpeg;base64,..."
+      fr.onerror = () => rej(fr.error);
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  // Base64 data URL → Blob
+  function base64ToBlob(dataUrl) {
+    const [header, data] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    const binary = atob(data);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  return { uuid, normalizePhone, fmtDateTime, fmtDate, initials, escHtml, debounce,
+           readFileAsArrayBuffer, readFileAsText, blobToBase64, base64ToBlob };
+})();
+
+// ============================================================
+// MODULE: Toast Notifications
+// ============================================================
+const Toast = (() => {
+  const container = document.getElementById('toast-container');
+
+  function show(msg, type = 'info', duration = 3000) {
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity .3s';
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  }
+
+  return { show, success: m => show(m,'success'), error: m => show(m,'error',4000), info: m => show(m,'info') };
+})();
+
+// ============================================================
+// MODULE: Loading Overlay
+// ============================================================
+const Loading = (() => {
+  const overlay = document.getElementById('loading-overlay');
+  const text = document.getElementById('loading-text');
+
+  function show(msg = 'Đang xử lý...') {
+    text.textContent = msg;
+    overlay.classList.add('open');
+  }
+  function hide() { overlay.classList.remove('open'); }
+
+  return { show, hide };
+})();
+
+// ============================================================
+// MODULE: Modal (confirm dialog)
+// ============================================================
+const Modal = (() => {
+  const overlay = document.getElementById('modal-overlay');
+  const box     = document.getElementById('modal-box');
+  const titleEl = document.getElementById('modal-title');
+  const bodyEl  = document.getElementById('modal-body');
+  const actEl   = document.getElementById('modal-actions');
+
+  function open({ title = 'Xác nhận', body = '', buttons = [] }) {
+    titleEl.textContent = title;
+    bodyEl.innerHTML = body;
+    actEl.innerHTML = '';
+    buttons.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = `btn ${b.cls || 'btn-secondary'}`;
+      btn.style.flex = '1';
+      btn.textContent = b.label;
+      btn.addEventListener('click', () => { close(); b.onClick?.(); });
+      actEl.appendChild(btn);
+    });
+    overlay.classList.add('open');
+  }
+  function close() { overlay.classList.remove('open'); }
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) close();
+  });
+
+  // Confirm shorthand
+  function confirm({ title, body, onConfirm, confirmLabel = 'Xác nhận', confirmCls = 'btn-danger' }) {
+    open({
+      title, body,
+      buttons: [
+        { label: 'Hủy', cls: 'btn-secondary' },
+        { label: confirmLabel, cls: confirmCls, onClick: onConfirm }
+      ]
+    });
+  }
+
+  return { open, close, confirm };
+})();
+
+// ============================================================
+// MODULE: DatabaseModule — IndexedDB
+// ============================================================
+const DB = (() => {
+  const DB_NAME    = 'SoGiaoHangDB';
+  const DB_VERSION = 2;
+  let db = null;
+
+  // Mở và khởi tạo DB
+  function open() {
+    return new Promise((resolve, reject) => {
+      if (db) return resolve(db);
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+
+        // --- customers store ---
+        if (!d.objectStoreNames.contains('customers')) {
+          const cs = d.createObjectStore('customers', { keyPath: 'id' });
+          cs.createIndex('phone',   'phoneNorm', { unique: false });
+          cs.createIndex('name',    'name',      { unique: false });
+          cs.createIndex('created', 'createdAt', { unique: false });
+          cs.createIndex('updated', 'updatedAt', { unique: false });
+        }
+
+        // --- locations store ---
+        if (!d.objectStoreNames.contains('locations')) {
+          const ls = d.createObjectStore('locations', { keyPath: 'id' });
+          ls.createIndex('customerId', 'customerId', { unique: false });
+        }
+
+        // --- deliveryEvents store ---
+        if (!d.objectStoreNames.contains('deliveryEvents')) {
+          const des = d.createObjectStore('deliveryEvents', { keyPath: 'id' });
+          des.createIndex('customerId', 'customerId', { unique: false });
+          des.createIndex('timestamp',  'timestamp',  { unique: false });
+        }
+
+        // --- photos store ---
+        if (!d.objectStoreNames.contains('photos')) {
+          const ps = d.createObjectStore('photos', { keyPath: 'id' });
+          ps.createIndex('locationId', 'locationId', { unique: false });
+        }
+
+        // --- settings store ---
+        if (!d.objectStoreNames.contains('settings')) {
+          d.createObjectStore('settings', { keyPath: 'key' });
+        }
+      };
+
+      req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+      req.onerror   = (e) => reject(e.target.error);
+      req.onblocked = ()  => reject(new Error('Database bị khóa bởi tab khác'));
+    });
+  }
+
+  // Thực hiện transaction
+  function tx(stores, mode, fn) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await open();
+        const transaction = db.transaction(stores, mode);
+        const result = await fn(transaction);
+        transaction.oncomplete = () => resolve(result);
+        transaction.onerror = (e) => reject(e.target.error);
+        transaction.onabort  = (e) => reject(new Error('Transaction bị hủy'));
+      } catch (err) {
+        // Nếu lỗi quota
+        if (err.name === 'QuotaExceededError') {
+          reject(new Error('Thiết bị hết dung lượng lưu trữ. Vui lòng xóa bớt dữ liệu.'));
+        } else {
+          reject(err);
+        }
+      }
+    });
+  }
+
+  // Helper: put vào store trong transaction
+  function putInTx(transaction, storeName, data) {
+    return new Promise((res, rej) => {
+      const req = transaction.objectStore(storeName).put(data);
+      req.onsuccess = () => res(req.result);
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  // Helper: delete trong transaction
+  function deleteInTx(transaction, storeName, key) {
+    return new Promise((res, rej) => {
+      const req = transaction.objectStore(storeName).delete(key);
+      req.onsuccess = () => res();
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  // Helper: getAll từ store
+  function getAllFromStore(storeName) {
+    return new Promise(async (resolve, reject) => {
+      await open();
+      const transaction = db.transaction([storeName], 'readonly');
+      const store = transaction.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // Helper: getAll từ index
+  function getAllByIndex(storeName, indexName, value) {
+    return new Promise(async (resolve, reject) => {
+      await open();
+      const transaction = db.transaction([storeName], 'readonly');
+      const index = transaction.objectStore(storeName).index(indexName);
+      const req = index.getAll(IDBKeyRange.only(value));
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // Helper: get single
+  function getOne(storeName, key) {
+    return new Promise(async (resolve, reject) => {
+      await open();
+      const transaction = db.transaction([storeName], 'readonly');
+      const req = transaction.objectStore(storeName).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // --- CUSTOMERS ---
+  async function saveCustomer(customer) {
+    const now = Date.now();
+    if (!customer.id) { customer.id = Utils.uuid(); customer.createdAt = now; }
+    customer.updatedAt = now;
+    customer.phoneNorm = Utils.normalizePhone(customer.phone || '');
+    await tx(['customers'], 'readwrite', t => putInTx(t, 'customers', customer));
+    return customer;
+  }
+
+  async function getCustomer(id) { return getOne('customers', id); }
+
+  async function getAllCustomers() { return getAllFromStore('customers'); }
+
+  async function deleteCustomer(id) {
+    // Xóa cascade: customer → locations → photos → deliveryEvents
+    const locations = await getLocationsByCustomer(id);
+    const photoIds  = [];
+    for (const loc of locations) {
+      const photos = await getPhotosByLocation(loc.id);
+      photos.forEach(p => photoIds.push(p.id));
+    }
+
+    await tx(['customers','locations','photos','deliveryEvents'], 'readwrite', async (t) => {
+      await deleteInTx(t, 'customers', id);
+      for (const loc of locations)  await deleteInTx(t, 'locations', loc.id);
+      for (const pid of photoIds)   await deleteInTx(t, 'photos', pid);
+      // Xóa delivery events
+      await new Promise((res, rej) => {
+        const idx = t.objectStore('deliveryEvents').index('customerId');
+        const req = idx.getAll(IDBKeyRange.only(id));
+        req.onsuccess = async () => {
+          for (const ev of req.result) {
+            await deleteInTx(t, 'deliveryEvents', ev.id);
+          }
+          res();
+        };
+        req.onerror = e => rej(e.target.error);
+      });
+    });
+  }
+
+  // Tìm theo số điện thoại (partial match)
+  async function searchCustomers(query) {
+    if (!query) return [];
+    const all = await getAllCustomers();
+    const q = Utils.normalizePhone(query.toLowerCase());
+    return all.filter(c => {
+      const norm  = (c.phoneNorm || '').toLowerCase();
+      const name  = (c.name || '').toLowerCase();
+      return norm.includes(q) || name.includes(query.toLowerCase()) ||
+             norm.endsWith(q);
+    });
+  }
+
+  // --- LOCATIONS ---
+  async function saveLocation(loc) {
+    const now = Date.now();
+    if (!loc.id) { loc.id = Utils.uuid(); loc.createdAt = now; }
+    loc.updatedAt = now;
+    await tx(['locations'], 'readwrite', t => putInTx(t, 'locations', loc));
+    return loc;
+  }
+
+  async function getLocationsByCustomer(customerId) {
+    return getAllByIndex('locations', 'customerId', customerId);
+  }
+
+  async function getAllLocations() {
+    return getAllFromStore('locations');
+  }
+
+  async function deleteLocation(locId) {
+    const photos = await getPhotosByLocation(locId);
+    await tx(['locations','photos'], 'readwrite', async (t) => {
+      await deleteInTx(t, 'locations', locId);
+      for (const p of photos) await deleteInTx(t, 'photos', p.id);
+    });
+  }
+
+  // --- PHOTOS ---
+  async function savePhoto(photo) {
+    const now = Date.now();
+    if (!photo.id) { photo.id = Utils.uuid(); photo.createdAt = now; }
+    await tx(['photos'], 'readwrite', t => putInTx(t, 'photos', photo));
+    return photo;
+  }
+
+  async function getPhotosByLocation(locationId) {
+    return getAllByIndex('photos', 'locationId', locationId);
+  }
+
+  async function deletePhoto(photoId) {
+    await tx(['photos'], 'readwrite', t => deleteInTx(t, 'photos', photoId));
+  }
+
+  // --- DELIVERY EVENTS ---
+  async function addDeliveryEvent(customerId) {
+    const event = {
+      id: Utils.uuid(),
+      customerId,
+      timestamp: Date.now()
+    };
+    await tx(['deliveryEvents'], 'readwrite', t => putInTx(t, 'deliveryEvents', event));
+
+    // Cập nhật counter và lastDelivery trong customer
+    const cust = await getCustomer(customerId);
+    if (cust) {
+      cust.deliveryCount = (cust.deliveryCount || 0) + 1;
+      cust.lastDelivery  = event.timestamp;
+      await saveCustomer(cust);
+    }
+    return event;
+  }
+
+  async function getDeliveryEvents(customerId) {
+    const events = await getAllByIndex('deliveryEvents', 'customerId', customerId);
+    return events.sort((a,b) => b.timestamp - a.timestamp);
+  }
+
+  // --- EXPORT ALL ---
+  async function exportAll() {
+    await open();
+    const [customers, locations, photos, deliveryEvents] = await Promise.all([
+      getAllFromStore('customers'),
+      getAllFromStore('locations'),
+      getAllFromStore('photos'),
+      getAllFromStore('deliveryEvents')
+    ]);
+
+    // Chuyển ảnh Blob sang Base64
+    const photosWithBase64 = await Promise.all(photos.map(async (p) => {
+      if (p.blob instanceof Blob) {
+        const b64 = await Utils.blobToBase64(p.blob);
+        return { ...p, blob: undefined, base64: b64, mimeType: p.blob.type };
+      }
+      return p;
+    }));
+
+    return { customers, locations, photos: photosWithBase64, deliveryEvents };
+  }
+
+  // --- IMPORT (gộp) ---
+  async function importMerge(data) {
+    await open();
+    await tx(['customers','locations','photos','deliveryEvents'], 'readwrite', async (t) => {
+      for (const c of (data.customers || [])) await putInTx(t, 'customers', c);
+      for (const l of (data.locations  || [])) await putInTx(t, 'locations', l);
+      for (const ev of (data.deliveryEvents || [])) await putInTx(t, 'deliveryEvents', ev);
+      for (const p of (data.photos || [])) {
+        // Khôi phục Blob từ base64
+        if (p.base64) {
+          const blob = Utils.base64ToBlob(p.base64);
+          await putInTx(t, 'photos', { ...p, blob, base64: undefined });
+        } else {
+          await putInTx(t, 'photos', p);
+        }
+      }
+    });
+  }
+
+  // --- IMPORT (thay thế toàn bộ) ---
+  async function importReplace(data) {
+    await open();
+    // Xóa tất cả stores trước
+    await tx(['customers','locations','photos','deliveryEvents'], 'readwrite', async (t) => {
+      await new Promise((res,rej) => { const r=t.objectStore('customers').clear(); r.onsuccess=res; r.onerror=e=>rej(e.target.error); });
+      await new Promise((res,rej) => { const r=t.objectStore('locations').clear(); r.onsuccess=res; r.onerror=e=>rej(e.target.error); });
+      await new Promise((res,rej) => { const r=t.objectStore('photos').clear(); r.onsuccess=res; r.onerror=e=>rej(e.target.error); });
+      await new Promise((res,rej) => { const r=t.objectStore('deliveryEvents').clear(); r.onsuccess=res; r.onerror=e=>rej(e.target.error); });
+    });
+    await importMerge(data);
+  }
+
+  // Lấy thông tin storage
+  async function getStorageInfo() {
+    if (navigator.storage && navigator.storage.estimate) {
+      const est = await navigator.storage.estimate();
+      const used = ((est.usage || 0) / 1024 / 1024).toFixed(2);
+      const quota = ((est.quota || 0) / 1024 / 1024).toFixed(0);
+      return `Đã dùng: ${used} MB / ~${quota} MB`;
+    }
+    return 'Không xác định';
+  }
+
+  return {
+    open, saveCustomer, getCustomer, getAllCustomers, deleteCustomer, searchCustomers,
+    saveLocation, getLocationsByCustomer, deleteLocation, getAllLocations,
+    savePhoto, getPhotosByLocation, deletePhoto,
+    addDeliveryEvent, getDeliveryEvents,
+    exportAll, importMerge, importReplace,
+    getStorageInfo
+  };
+})();
+
+// ============================================================
+// MODULE: ImageModule — Nén ảnh bằng Canvas
+// ============================================================
+const ImageModule = (() => {
+  const MAX_DIM  = 800;
+  const QUALITY  = 0.75;
+
+  function compress(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          let { width, height } = img;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+            width  = Math.round(width  * ratio);
+            height = Math.round(height * ratio);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width  = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Canvas context không khả dụng');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(blob => {
+            URL.revokeObjectURL(url);
+            if (blob) resolve(blob);
+            else reject(new Error('Không thể nén ảnh'));
+          }, 'image/jpeg', QUALITY);
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Không đọc được file ảnh'));
+      };
+      img.src = url;
+    });
+  }
+
+  // Tạo ObjectURL từ Blob (giải phóng sau khi dùng)
+  function createPreviewUrl(blob) {
+    return URL.createObjectURL(blob);
+  }
+
+  function revokeUrl(url) {
+    if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+  }
+
+  return { compress, createPreviewUrl, revokeUrl };
+})();
+
+// ============================================================
+// MODULE: MapModule — Leaflet + OpenStreetMap
+// ============================================================
+const MapModule = (() => {
+  // Lưu các instance map để tránh khởi tạo lại
+  const instances = {};
+
+  // Tạo hoặc lấy instance map
+  function init(containerId, options = {}) {
+    if (instances[containerId]) {
+      // Đảm bảo container visible rồi invalidate
+      setTimeout(() => {
+        if (instances[containerId]._leaflet_id) {
+          instances[containerId].invalidateSize();
+        }
+      }, 100);
+      return instances[containerId];
+    }
+
+    const el = document.getElementById(containerId);
+    if (!el) return null;
+
+    const lat  = options.lat  ?? 10.7769;
+    const lng  = options.lng  ?? 106.7009;
+    const zoom = options.zoom ?? 15;
+
+    const map = L.map(containerId, {
+      center: [lat, lng],
+      zoom,
+      zoomControl: true,
+      attributionControl: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    instances[containerId] = map;
+    return map;
+  }
+
+  // Xóa instance
+  function destroy(containerId) {
+    if (instances[containerId]) {
+      instances[containerId].remove();
+      delete instances[containerId];
+    }
+  }
+
+  // Thêm/cập nhật marker draggable
+  function setMarker(map, lat, lng, draggable = false, onDrag) {
+    // Xóa markers cũ
+    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
+
+    const icon = L.divIcon({
+      html: `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z" fill="#2563EB"/>
+        <circle cx="16" cy="16" r="6" fill="white"/>
+      </svg>`,
+      className: '',
+      iconSize: [32, 40],
+      iconAnchor: [16, 40],
+    });
+
+    const marker = L.marker([lat, lng], { icon, draggable }).addTo(map);
+    if (draggable && onDrag) {
+      marker.on('dragend', e => {
+        const pos = e.target.getLatLng();
+        onDrag(pos.lat, pos.lng);
+      });
+    }
+    return marker;
+  }
+
+  // Di chuyển bản đồ đến tọa độ
+  function flyTo(map, lat, lng, zoom = 17) {
+    map.flyTo([lat, lng], zoom, { animate: true, duration: 0.8 });
+  }
+
+  // Lấy GPS hiện tại
+  function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Trình duyệt không hỗ trợ GPS'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        err => {
+          const msgs = {
+            1: 'Bạn đã từ chối quyền GPS. Vui lòng cho phép trong cài đặt trình duyệt.',
+            2: 'Không xác định được vị trí. Vui lòng thử lại.',
+            3: 'Hết thời gian chờ GPS.',
+          };
+          reject(new Error(msgs[err.code] || 'Lỗi GPS không xác định'));
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
+    });
+  }
+
+  // Reverse geocoding — chỉ gửi tọa độ, không gửi thông tin khách
+  async function reverseGeocode(lat, lng) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'vi', 'User-Agent': 'SoGiaoHang/1.0' }
+    });
+    if (!res.ok) throw new Error('Dịch vụ không phản hồi');
+    const data = await res.json();
+    return data.display_name || '';
+  }
+
+  // Forward geocoding — chỉ gửi chuỗi địa chỉ
+  async function forwardGeocode(query) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=vn`;
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'vi', 'User-Agent': 'SoGiaoHang/1.0' }
+    });
+    if (!res.ok) throw new Error('Dịch vụ không phản hồi');
+    return res.json(); // Mảng kết quả
+  }
+
+  return { init, destroy, setMarker, flyTo, getCurrentPosition, reverseGeocode, forwardGeocode };
+})();
+
+// ============================================================
+// MODULE: ScreenManager (Router)
+// ============================================================
+const ScreenManager = (() => {
+  let currentScreen = 'home';
+
+  function show(screenId) {
+    if (screenId === 'backup') screenId = 'settings';
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(`screen-${screenId}`);
+    if (target) target.classList.add('active');
+
+    // Cập nhật nav
+    document.querySelectorAll('.bn-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.screen === screenId);
+    });
+
+    currentScreen = screenId;
+
+    // Trigger screen-specific init
+    if (screenId === 'list')     CustomerModule.renderList();
+    if (screenId === 'settings') {
+      SettingsModule.init();
+      BackupModule.refreshStats();
+    }
+  }
+
+  function current() { return currentScreen; }
+
+  return { show, current };
+})();
+
+function openSidebar() {}
+function closeSidebar() {}
+
+// ============================================================
+// MODULE: Clock
+// ============================================================
+const ClockModule = (() => {
+  const DAYS = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+
+  function update() {
+    const now  = new Date();
+    const pad  = n => String(n).padStart(2, '0');
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const date = `${DAYS[now.getDay()]}, ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+    document.getElementById('clock-time').textContent = time;
+    document.getElementById('clock-date').textContent = date;
+  }
+
+  function start() {
+    update();
+    setInterval(update, 10000);
+  }
+
+  return { start };
+})();
+
+// ============================================================
+// MODULE: CustomerModule — Home screen logic
+// ============================================================
+const CustomerModule = (() => {
+  // --- Lightbox state ---
+  let lbPhotos = [];
+  let lbIndex  = 0;
+  let lbCtx = null; // { customerId, locationId }
+
+  // --- Debounced search ---
+  const doSearch = Utils.debounce(async (q) => {
+    const dd = document.getElementById('search-dropdown');
+    if (!q || q.length < 1) { dd.classList.remove('open'); return; }
+    try {
+      const results = await DB.searchCustomers(q);
+      renderDropdown(results);
+    } catch(err) {
+      console.warn('Search error:', err);
+    }
+  }, 200);
+
+  function renderDropdown(results) {
+    const dd = document.getElementById('search-dropdown');
+    if (!results.length) {
+      dd.innerHTML = `<div class="suggest-item" style="color:var(--text-sec);cursor:default;">Không tìm thấy khách hàng nào</div>`;
+      dd.classList.add('open');
+      return;
+    }
+    dd.innerHTML = results.slice(0, 8).map(c => `
+      <div class="suggest-item" role="option" tabindex="0" data-cid="${Utils.escHtml(c.id)}">
+        <div class="suggest-name">${Utils.escHtml(c.name || '(Chưa có tên)')}</div>
+        <div class="suggest-phone">${Utils.escHtml(c.phone || '')}</div>
+      </div>
+    `).join('');
+    dd.classList.add('open');
+
+    dd.querySelectorAll('.suggest-item[data-cid]').forEach(el => {
+      el.addEventListener('click', () => selectCustomer(el.dataset.cid));
+      el.addEventListener('keydown', e => { if(e.key==='Enter') selectCustomer(el.dataset.cid); });
+    });
+  }
+
+  async function selectCustomer(id) {
+    document.getElementById('search-dropdown').classList.remove('open');
+    try {
+      const customer = await DB.getCustomer(id);
+      if (!customer) { Toast.error('Không tìm thấy khách hàng'); return; }
+
+      const [locations, events] = await Promise.all([
+        DB.getLocationsByCustomer(id),
+        DB.getDeliveryEvents(id)
+      ]);
+
+      // Load photos cho từng location
+      for (const loc of locations) {
+        loc._photos = await DB.getPhotosByLocation(loc.id);
+      }
+
+      renderCustomerDetail(customer, locations, events);
+    } catch(err) {
+      Toast.error('Lỗi tải dữ liệu: ' + err.message);
+    }
+  }
+
+  function renderCustomerDetail(customer, locations, events) {
+    document.getElementById('home-empty').style.display = 'none';
+    const content = document.getElementById('customer-content');
+    content.style.display = 'block';
+
+    const defaultLoc = locations.find(l => l.isDefault) || locations[0];
+    let activeLoc = defaultLoc;
+
+    // Render lần đầu
+    content.innerHTML = buildCustomerHTML(customer, locations, events, activeLoc);
+    initCustomerEvents(customer, locations, events, content, activeLoc);
+
+    // Map
+    if (activeLoc && activeLoc.lat && activeLoc.lng) {
+      initViewMap(activeLoc.lat, activeLoc.lng);
+    } else {
+      initViewMap(null, null);
+    }
+  }
+
+  function buildCustomerHTML(customer, locations, events, activeLoc) {
+    const deliveryCount = customer.deliveryCount || 0;
+    const lastDel = customer.lastDelivery ? Utils.fmtDateTime(customer.lastDelivery) : 'Chưa giao';
+
+    let addrTabsHTML = '';
+    if (locations.length > 1) {
+      addrTabsHTML = `<div class="addr-tabs" id="addr-tabs">` +
+        locations.map((loc, i) => `
+          <button class="addr-tab ${loc.id === (activeLoc&&activeLoc.id) ? 'active' : ''}"
+                  data-lid="${Utils.escHtml(loc.id)}"
+                  aria-label="Địa điểm ${Utils.escHtml(loc.label || `Địa chỉ ${i+1}`)}">
+            ${Utils.escHtml(loc.label || `Địa chỉ ${i+1}`)}
+          </button>`).join('') + `</div>`;
+    }
+
+    const locHTML = activeLoc ? buildLocationHTML(activeLoc) : `
+      <div class="addr-card">
+        <div class="addr-label">Địa chỉ</div>
+        <div class="addr-text text-sec">Chưa có địa chỉ nào</div>
+      </div>`;
+
+    const photosHTML = activeLoc && activeLoc._photos && activeLoc._photos.length > 0 ?
+      `<div class="section-title" style="margin-top:16px;">Ảnh Thực Tế</div>
+       <div class="photo-grid" id="photo-grid-view">${buildPhotosHTML(activeLoc._photos)}</div>` :
+      `<div style="margin-top:12px;font-size:14px;color:var(--text-sec);">Chưa có ảnh cho địa điểm này</div>`;
+
+    const recentEvents = events.slice(0, 5);
+    const histHTML = recentEvents.length ? recentEvents.map(ev => `
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-time">${Utils.fmtDateTime(ev.timestamp)}</div>
+      </div>`).join('') : '<div class="text-sec text-small" style="padding:10px 0;">Chưa có lần giao nào</div>';
+
+    return `
+      <!-- Thông tin khách -->
+      <div class="cust-card">
+        <div class="cust-name">${Utils.escHtml(customer.name || '(Chưa có tên)')}</div>
+        <div class="cust-phone-row">
+          <a class="cust-phone" href="tel:${Utils.escHtml(customer.phone||'')}"
+             aria-label="Gọi ${Utils.escHtml(customer.phone||'')}">
+            ${Utils.escHtml(customer.phone || '')}
+          </a>
+        </div>
+        <div class="cust-stats">
+          <span class="tag">📦 ${deliveryCount} lần giao</span>
+          <span class="tag tag-gray">🕐 ${lastDel}</span>
+        </div>
+        ${customer.note ? `<div class="cust-note">${Utils.escHtml(customer.note)}</div>` : ''}
+      </div>
+
+      <!-- Nút hành động -->
+      <div class="action-row">
+        <button class="btn btn-success" id="btn-deliver" style="flex:1;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Đã giao hàng
+        </button>
+        <a class="btn btn-secondary" href="tel:${Utils.escHtml(customer.phone||'')}" id="btn-call">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.7 11.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.53a16 16 0 0 0 6 6l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Gọi
+        </a>
+        <button class="btn btn-secondary" id="btn-edit-cust">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Sửa
+        </button>
+      </div>
+
+      <!-- Địa chỉ tabs -->
+      ${addrTabsHTML}
+
+      <!-- Địa chỉ active -->
+      <div id="active-loc-container">${locHTML}</div>
+
+      <!-- Bản đồ -->
+      <div id="map" role="application" aria-label="Bản đồ vị trí"></div>
+
+      <!-- Ảnh -->
+      ${photosHTML}
+
+      <!-- Lịch sử giao hàng -->
+      <div class="section-title" style="margin-top:16px;">Lịch Sử Giao Hàng</div>
+      <div class="cust-card" style="padding:12px 16px;" id="delivery-history">
+        ${histHTML}
+        ${events.length > 5 ? `<div class="text-sec text-small" style="margin-top:8px;">... và ${events.length-5} lần khác</div>` : ''}
+      </div>
+
+      <!-- Nút thêm địa chỉ -->
+      <div style="margin-top:8px;margin-bottom:8px;">
+        <button class="btn btn-secondary btn-full" id="btn-add-addr-from-home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Thêm địa điểm giao hàng
+        </button>
+      </div>
+    `;
+  }
+
+  function buildLocationHTML(loc) {
+    const hasCoords = loc.lat && loc.lng;
+    const gmUrl = hasCoords ?
+      `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}` : '';
+
+    return `
+      <div class="addr-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="addr-label">${Utils.escHtml(loc.label || 'Địa chỉ')}</div>
+          ${loc.isDefault ? '<span class="tag" style="font-size:11px;">Mặc định</span>' : ''}
+        </div>
+        <div class="addr-text">${Utils.escHtml(loc.address || 'Chưa có địa chỉ văn bản')}</div>
+        ${hasCoords ? `<div class="addr-coords">📍 ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</div>` : '<div class="addr-coords text-sec">Chưa có tọa độ GPS</div>'}
+        ${loc.note ? `<div class="cust-note" style="margin-top:8px;">${Utils.escHtml(loc.note)}</div>` : ''}
+        <div class="action-row" style="margin-top:12px;margin-bottom:0;">
+          ${hasCoords ? `
+            <a class="btn btn-primary" href="${gmUrl}" target="_blank" rel="noopener noreferrer" id="btn-gmaps">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Chỉ đường
+            </a>` : `
+            <span class="btn btn-secondary" style="cursor:default;opacity:.6;">Chưa có tọa độ</span>`}
+        </div>
+      </div>`;
+  }
+
+  function buildPhotosHTML(photos) {
+    return photos.map((p, i) => {
+      const url = p.blob ? ImageModule.createPreviewUrl(p.blob) : '';
+      return url ? `<img class="photo-thumb" src="${url}" alt="Ảnh ${i+1}" data-idx="${i}" loading="lazy"/>` : '';
+    }).join('');
+  }
+
+  // Đăng ký event listeners cho customer detail
+  function initCustomerEvents(customer, locations, events, container, activeLoc) {
+    let currentLocId = activeLoc?.id;
+
+    // Nút giao hàng — debounce chống double-tap
+    let deliverBusy = false;
+    container.querySelector('#btn-deliver')?.addEventListener('click', async () => {
+      if (deliverBusy) return;
+      deliverBusy = true;
+      try {
+        await DB.addDeliveryEvent(customer.id);
+        Toast.success('Đã ghi nhận giao hàng thành công!');
+        // Refresh
+        const [updCust, updEvents] = await Promise.all([
+          DB.getCustomer(customer.id),
+          DB.getDeliveryEvents(customer.id)
+        ]);
+        // Cập nhật stats nhỏ gọn
+        const statsEl = container.querySelector('.cust-stats');
+        if (statsEl) {
+          const dc = updCust.deliveryCount || 0;
+          const ld = updCust.lastDelivery ? Utils.fmtDateTime(updCust.lastDelivery) : 'Chưa giao';
+          statsEl.innerHTML = `<span class="tag">📦 ${dc} lần giao</span><span class="tag tag-gray">🕐 ${ld}</span>`;
+        }
+        const histEl = container.querySelector('#delivery-history');
+        if (histEl) {
+          const recent = updEvents.slice(0,5);
+          histEl.innerHTML = recent.map(ev => `<div class="history-item"><div class="history-dot"></div><div class="history-time">${Utils.fmtDateTime(ev.timestamp)}</div></div>`).join('');
+        }
+      } catch(err) {
+        Toast.error('Lỗi ghi nhận: ' + err.message);
+      } finally {
+        setTimeout(() => { deliverBusy = false; }, 1500);
+      }
+    });
+
+    // Nút sửa
+    container.querySelector('#btn-edit-cust')?.addEventListener('click', () => {
+      FormModule.openEdit(customer.id);
+    });
+
+    // Tab địa chỉ
+    container.querySelector('#addr-tabs')?.addEventListener('click', async (e) => {
+      const tab = e.target.closest('.addr-tab');
+      if (!tab) return;
+      const lid = tab.dataset.lid;
+      const loc = locations.find(l => l.id === lid);
+      if (!loc || loc.id === currentLocId) return;
+
+      // Load photos nếu chưa có
+      if (!loc._photos) loc._photos = await DB.getPhotosByLocation(loc.id);
+
+      currentLocId = loc.id;
+
+      // Cập nhật tab active
+      container.querySelectorAll('.addr-tab').forEach(t => t.classList.toggle('active', t.dataset.lid === lid));
+
+      // Cập nhật địa chỉ
+      container.querySelector('#active-loc-container').innerHTML = buildLocationHTML(loc);
+
+      // Cập nhật bản đồ
+      if (loc.lat && loc.lng) {
+        const map = MapModule.instances?.['map'] || null;
+        // Re-init an toàn
+        if (instances['map']) {
+          MapModule.setMarker(instances['map'], loc.lat, loc.lng);
+          MapModule.flyTo(instances['map'], loc.lat, loc.lng);
+        }
+        initViewMap(loc.lat, loc.lng);
+      } else {
+        initViewMap(null, null);
+      }
+
+      // Cập nhật ảnh
+      const pgv = container.querySelector('#photo-grid-view');
+      if (pgv) {
+        pgv.innerHTML = buildPhotosHTML(loc._photos || []);
+        bindPhotoThumbs(pgv, loc._photos || [], { customerId: customer.id, locationId: loc.id });
+      }
+    });
+
+    // Ảnh thumbnails
+    const pgv = container.querySelector('#photo-grid-view');
+    if (pgv) {
+      bindPhotoThumbs(pgv, activeLoc?._photos || [], { customerId: customer.id, locationId: activeLoc?.id });
+    }
+
+    // Thêm địa chỉ
+    container.querySelector('#btn-add-addr-from-home')?.addEventListener('click', () => {
+      FormModule.openEdit(customer.id, { addLocation: true });
+    });
+  }
+
+  // Khởi tạo bản đồ xem (không draggable)
+  const instances = {};
+  function initViewMap(lat, lng) {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+
+    // Hủy instance cũ nếu tồn tại
+    if (instances['map']) {
+      instances['map'].remove();
+      delete instances['map'];
+      mapEl.innerHTML = '';
+    }
+
+    if (lat && lng) {
+      try {
+        const map = L.map('map', { center: [lat, lng], zoom: 17 });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19
+        }).addTo(map);
+        MapModule.setMarker(map, lat, lng, false);
+        instances['map'] = map;
+      } catch(err) {
+        mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg><span>Không tải được bản đồ</span></div>`;
+      }
+    } else {
+      mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Chưa có tọa độ GPS</span></div>`;
+    }
+  }
+
+  function bindPhotoThumbs(container, photos, ctx) {
+    container.querySelectorAll('.photo-thumb').forEach(img => {
+      img.addEventListener('click', () => {
+        const idx = parseInt(img.dataset.idx);
+        openLightbox(photos, idx, ctx);
+      });
+    });
+  }
+
+  // --- LIGHTBOX ---
+  function openLightbox(photos, startIdx, ctx) {
+    lbPhotos = photos;
+    lbIndex  = startIdx;
+    lbCtx    = ctx;
+    const lb = document.getElementById('lightbox');
+    lb.classList.add('open');
+    renderLightboxImage();
+  }
+
+  function renderLightboxImage() {
+    const p = lbPhotos[lbIndex];
+    if (!p) return;
+    const url = p.blob ? ImageModule.createPreviewUrl(p.blob) : '';
+    const img = document.getElementById('lightbox-img');
+    const old = img.src;
+    img.src = url;
+    if (old && old.startsWith('blob:')) ImageModule.revokeUrl(old);
+    document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
+    document.getElementById('lb-prev').style.display = lbPhotos.length > 1 ? '' : 'none';
+    document.getElementById('lb-next').style.display = lbPhotos.length > 1 ? '' : 'none';
+  }
+
+  // Render danh sách màn hình List
+  async function renderList() {
+    const listEl = document.getElementById('customer-list');
+    listEl.innerHTML = `<div class="flex-center" style="padding:40px;"><div class="loading-spinner"></div></div>`;
+
+    try {
+      const [all, allLocations] = await Promise.all([
+        DB.getAllCustomers(),
+        DB.getAllLocations ? DB.getAllLocations() : []
+      ]);
+
+      const locationsByCust = {};
+      (allLocations || []).forEach(l => {
+        if (!locationsByCust[l.customerId]) locationsByCust[l.customerId] = [];
+        locationsByCust[l.customerId].push(l);
+      });
+
+      const sort = document.querySelector('.sort-btn.active')?.dataset.sort || 'name';
+      const q = (document.getElementById('list-search')?.value || '').toLowerCase().trim();
+
+      let filtered = q ? all.filter(c => {
+        const matchName = (c.name || '').toLowerCase().includes(q);
+        const matchPhone = (c.phoneNorm || '').includes(Utils.normalizePhone(q));
+        const custLocs = locationsByCust[c.id] || [];
+        const matchAddr = custLocs.some(l =>
+          (l.address || '').toLowerCase().includes(q) ||
+          (l.label || '').toLowerCase().includes(q)
+        );
+        return matchName || matchPhone || matchAddr;
+      }) : [...all];
+
+      filtered.sort((a,b) => {
+        if (sort === 'name')     return (a.name||'').localeCompare(b.name||'', 'vi');
+        if (sort === 'created')  return (b.createdAt||0) - (a.createdAt||0);
+        if (sort === 'updated')  return (b.updatedAt||0) - (a.updatedAt||0);
+        if (sort === 'delivery') return (b.lastDelivery||0) - (a.lastDelivery||0);
+        return 0;
+      });
+
+      document.getElementById('list-count').textContent = `${filtered.length} / ${all.length} khách hàng`;
+
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="empty-state">
+          <div style="width:72px; height:72px; border-radius:50%; background:var(--blue-light); display:flex; align-items:center; justify-content:center; color:var(--blue); margin-bottom:16px;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          </div>
+          <div class="empty-title">${all.length === 0 ? 'Chưa có khách hàng nào' : 'Không tìm thấy kết quả'}</div>
+          <div class="empty-sub" style="max-width:280px; margin-bottom:18px;">${all.length === 0 ? 'Bấm nút bên dưới để thêm và lưu khách hàng đầu tiên của bạn.' : 'Thử tìm với tên, số điện thoại hoặc địa chỉ khác.'}</div>
+          ${all.length === 0 ? `
+            <button class="btn btn-primary" id="btn-empty-add" style="padding:0 22px; height:44px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Thêm khách hàng ngay
+            </button>
+          ` : `
+            <button class="btn btn-secondary btn-sm" id="btn-empty-clear" style="height:38px; padding:0 16px;">Xóa bộ lọc tìm kiếm</button>
+          `}
+        </div>`;
+
+        document.getElementById('btn-empty-add')?.addEventListener('click', () => FormModule.openAdd());
+        document.getElementById('btn-empty-clear')?.addEventListener('click', () => {
+          const listInput = document.getElementById('list-search');
+          if (listInput) listInput.value = '';
+          const listClearBtn = document.getElementById('list-search-clear');
+          if (listClearBtn) listClearBtn.style.display = 'none';
+          CustomerModule.renderList();
+        });
+        return;
+      }
+
+      // Phân lô để tránh giật lag với danh sách lớn
+      const BATCH = 20;
+      listEl.innerHTML = '';
+      const renderBatch = (items) => items.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'customer-item';
+        div.innerHTML = buildListItemHTML(c, locationsByCust[c.id] || []);
+        listEl.appendChild(div);
+
+        // Click cả card để mở xem chi tiết
+        div.addEventListener('click', (e) => {
+          if (e.target.closest('button') || e.target.closest('a')) return;
+          ScreenManager.show('home');
+          setTimeout(() => {
+            document.getElementById('search-input').value = c.phone || '';
+            selectCustomer(c.id);
+          }, 100);
+        });
+
+        div.querySelector('.ci-btn-view').addEventListener('click', (e) => {
+          e.stopPropagation();
+          ScreenManager.show('home');
+          setTimeout(() => {
+            document.getElementById('search-input').value = c.phone || '';
+            selectCustomer(c.id);
+          }, 100);
+        });
+
+        div.querySelector('.ci-btn-edit').addEventListener('click', (e) => {
+          e.stopPropagation();
+          FormModule.openEdit(c.id);
+        });
+
+        div.querySelector('.ci-btn-del').addEventListener('click', (e) => {
+          e.stopPropagation();
+          Modal.confirm({
+            title: 'Xóa khách hàng?',
+            body: `<p>Bạn có chắc muốn xóa <strong>${Utils.escHtml(c.name || c.phone)}</strong>?</p>
+                   <p style="margin-top:8px;color:var(--text-sec);font-size:14px;">Toàn bộ địa chỉ, ảnh và lịch sử giao hàng sẽ bị xóa vĩnh viễn.</p>`,
+            confirmLabel: 'Xóa vĩnh viễn',
+            onConfirm: async () => {
+              try {
+                Loading.show('Đang xóa...');
+                await DB.deleteCustomer(c.id);
+                Toast.success('Đã xóa khách hàng');
+                CustomerModule.renderList();
+              } catch(err) { Toast.error('Lỗi xóa: ' + err.message); }
+              finally { Loading.hide(); }
+            }
+          });
+        });
+      });
+
+      for (let i = 0; i < filtered.length; i += BATCH) {
+        renderBatch(filtered.slice(i, i + BATCH));
+      }
+    } catch(err) {
+      listEl.innerHTML = `<div class="empty-state"><div class="empty-title">Lỗi tải dữ liệu</div><div class="empty-sub">${err.message}</div></div>`;
+    }
+  }
+
+  function buildListItemHTML(c, locs = []) {
+    const initials = Utils.initials(c.name || c.phone || '?');
+    const primaryLoc = locs.find(l => l.isDefault) || locs[0];
+    const addrText = primaryLoc ? (primaryLoc.address || primaryLoc.label || '') : '';
+    const locBadge = locs.length > 1 ? `<span class="ci-badge ci-badge-blue">📍 ${locs.length} địa chỉ</span>` : '';
+
+    return `
+      <div class="ci-top">
+        <div class="ci-avatar">${initials}</div>
+        <div class="ci-info">
+          <div class="ci-name-row">
+            <div class="ci-name">${Utils.escHtml(c.name || '(Chưa có tên)')}</div>
+            ${c.phone ? `
+              <a href="tel:${c.phone}" class="ci-phone" title="Gọi điện">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                ${Utils.escHtml(c.phone)}
+              </a>
+            ` : ''}
+          </div>
+          ${addrText ? `
+            <div class="ci-addr" title="${Utils.escHtml(addrText)}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px;color:var(--text-sec);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="ci-addr-text">${Utils.escHtml(addrText)}</span>
+            </div>
+          ` : ''}
+          <div class="ci-meta">
+            <span class="ci-badge ci-badge-success">📦 ${c.deliveryCount||0} đơn</span>
+            <span class="ci-badge">${c.lastDelivery ? '🕒 ' + Utils.fmtDate(c.lastDelivery) : 'Chưa giao'}</span>
+            ${locBadge}
+          </div>
+        </div>
+      </div>
+      <div class="ci-actions">
+        <button class="btn btn-secondary btn-sm ci-btn-view" style="flex:1;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Xem
+        </button>
+        <button class="btn btn-secondary btn-sm ci-btn-edit" style="flex:1;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Sửa
+        </button>
+        <button class="btn btn-danger btn-sm ci-btn-del" style="flex:0 0 74px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Xóa
+        </button>
+      </div>`;
+  }
+
+  function initSearchListeners() {
+    const input = document.getElementById('search-input');
+    const clearBtn = document.getElementById('search-clear');
+
+    input.addEventListener('input', () => {
+      const v = input.value;
+      clearBtn.classList.toggle('visible', v.length > 0);
+      doSearch(v);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.classList.remove('visible');
+      document.getElementById('search-dropdown').classList.remove('open');
+      document.getElementById('home-empty').style.display = '';
+      document.getElementById('customer-content').style.display = 'none';
+      input.focus();
+    });
+
+    // Đóng dropdown khi click ngoài
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-container')) {
+        document.getElementById('search-dropdown').classList.remove('open');
+      }
+    });
+
+    // List search
+    const listInput = document.getElementById('list-search');
+    const listClearBtn = document.getElementById('list-search-clear');
+    if (listInput) {
+      const debouncedList = Utils.debounce(() => CustomerModule.renderList(), 200);
+      listInput.addEventListener('input', () => {
+        listClearBtn.style.display = listInput.value ? 'flex' : 'none';
+        debouncedList();
+      });
+      listClearBtn?.addEventListener('click', () => {
+        listInput.value = '';
+        listClearBtn.style.display = 'none';
+        CustomerModule.renderList();
+      });
+    }
+  }
+
+  // Init lightbox
+  function initLightbox() {
+    const lb = document.getElementById('lightbox');
+    document.getElementById('lightbox-close').addEventListener('click', () => {
+      lb.classList.remove('open');
+      const img = document.getElementById('lightbox-img');
+      ImageModule.revokeUrl(img.src);
+      img.src = '';
+    });
+    document.getElementById('lb-prev').addEventListener('click', () => {
+      lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
+      renderLightboxImage();
+    });
+    document.getElementById('lb-next').addEventListener('click', () => {
+      lbIndex = (lbIndex + 1) % lbPhotos.length;
+      renderLightboxImage();
+    });
+    document.getElementById('lightbox-del').addEventListener('click', async () => {
+      const photo = lbPhotos[lbIndex];
+      if (!photo) return;
+      Modal.confirm({
+        title: 'Xóa ảnh?',
+        body: 'Ảnh này sẽ bị xóa vĩnh viễn.',
+        confirmLabel: 'Xóa',
+        onConfirm: async () => {
+          try {
+            await DB.deletePhoto(photo.id);
+            lbPhotos.splice(lbIndex, 1);
+            if (!lbPhotos.length) {
+              lb.classList.remove('open');
+              Toast.success('Đã xóa ảnh');
+              // Re-select customer để refresh
+              if (lbCtx?.customerId) selectCustomer(lbCtx.customerId);
+              return;
+            }
+            lbIndex = Math.min(lbIndex, lbPhotos.length - 1);
+            renderLightboxImage();
+            Toast.success('Đã xóa ảnh');
+          } catch(err) { Toast.error('Lỗi xóa ảnh: ' + err.message); }
+        }
+      });
+    });
+    // Vuốt trái/phải
+    let touchStartX = 0;
+    lb.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+    lb.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) { lbIndex = (lbIndex + 1) % lbPhotos.length; }
+        else        { lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length; }
+        renderLightboxImage();
+      }
+    }, {passive:true});
+  }
+
+  return { initSearchListeners, initLightbox, renderList, selectCustomer };
+})();
+
+// ============================================================
+// MODULE: FormModule — Add/Edit Customer
+// ============================================================
+const FormModule = (() => {
+  let editingCustomerId = null;
+  let locationsDraft = []; // Mảng { id, label, address, lat, lng, note, isDefault, photos: [{id, blob}] }
+  let formMapInstance = null;
+  let formMapLocIdx  = null;
+  let geocodeDebounce = null;
+  let lastDeliverCount = 0;
+  let lastDeliverDate  = null;
+
+  function reset() {
+    editingCustomerId = null;
+    locationsDraft    = [];
+    lastDeliverCount  = 0;
+    lastDeliverDate   = null;
+    document.getElementById('f-phone').value = '';
+    document.getElementById('f-name').value  = '';
+    document.getElementById('f-note').value  = '';
+    document.getElementById('f-phone-error').style.display = 'none';
+    document.getElementById('add-screen-title').textContent = 'Thêm Khách Hàng';
+    renderLocationsEditor();
+    destroyFormMap();
+  }
+
+  async function openEdit(customerId, opts = {}) {
+    reset();
+    editingCustomerId = customerId;
+    document.getElementById('add-screen-title').textContent = 'Sửa Thông Tin Khách Hàng';
+
+    try {
+      Loading.show('Đang tải dữ liệu...');
+      const [cust, locs] = await Promise.all([
+        DB.getCustomer(customerId),
+        DB.getLocationsByCustomer(customerId)
+      ]);
+
+      document.getElementById('f-phone').value = cust.phone || '';
+      document.getElementById('f-name').value  = cust.name  || '';
+      document.getElementById('f-note').value  = cust.note  || '';
+      lastDeliverCount = cust.deliveryCount || 0;
+      lastDeliverDate  = cust.lastDelivery  || null;
+
+      // Load photos cho mỗi location
+      for (const loc of locs) {
+        const photos = await DB.getPhotosByLocation(loc.id);
+        locationsDraft.push({
+          id: loc.id,
+          label: loc.label || '',
+          address: loc.address || '',
+          lat: loc.lat || null,
+          lng: loc.lng || null,
+          note: loc.note || '',
+          isDefault: loc.isDefault || false,
+          photos: photos.map(p => ({ id: p.id, blob: p.blob, isNew: false }))
+        });
+      }
+    } catch(err) {
+      Toast.error('Lỗi tải dữ liệu: ' + err.message);
+    } finally {
+      Loading.hide();
+    }
+
+    if (opts.addLocation) {
+      addLocationDraft();
+    }
+
+    ScreenManager.show('add');
+    renderLocationsEditor();
+  }
+
+  function openAdd() {
+    reset();
+    ScreenManager.show('add');
+    renderLocationsEditor();
+  }
+
+  function addLocationDraft() {
+    locationsDraft.push({
+      id: Utils.uuid(),
+      label: '',
+      address: '',
+      lat: null,
+      lng: null,
+      note: '',
+      isDefault: locationsDraft.length === 0,
+      photos: [],
+      isNew: true
+    });
+    renderLocationsEditor();
+    // Scroll đến location mới
+    setTimeout(() => {
+      const editor = document.getElementById('locations-editor');
+      if (editor) editor.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  function renderLocationsEditor() {
+    const container = document.getElementById('locations-editor');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!locationsDraft.length) {
+      container.innerHTML = `<div class="text-sec text-small" style="padding:10px 0 16px;">Chưa có địa điểm giao hàng. Bấm "Thêm địa điểm" để thêm.</div>`;
+      return;
+    }
+
+    locationsDraft.forEach((loc, idx) => {
+      const panel = document.createElement('div');
+      panel.className = 'loc-item';
+      panel.id = `loc-panel-${idx}`;
+      panel.innerHTML = buildLocPanel(loc, idx);
+      container.appendChild(panel);
+      bindLocPanelEvents(panel, idx);
+    });
+
+    // Khởi tạo map cho panel cuối nếu đang mở rộng
+    // (map được khởi tạo khi người dùng cần)
+  }
+
+  function buildLocPanel(loc, idx) {
+    const photoHTML = loc.photos.map((p, pi) => {
+      const url = p.previewUrl || (p.blob ? ImageModule.createPreviewUrl(p.blob) : '');
+      if (!p.previewUrl && url) p.previewUrl = url;
+      return `<div class="photo-preview-item">
+        <img src="${url}" alt="Ảnh ${pi+1}"/>
+        <button class="photo-remove-btn" data-pidx="${pi}" aria-label="Xóa ảnh">×</button>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="loc-item-header">
+        <div class="loc-item-name">📍 ${Utils.escHtml(loc.label || `Địa điểm ${idx+1}`)}</div>
+        <div style="display:flex;gap:6px;">
+          ${!loc.isDefault ? `<button class="btn btn-secondary btn-sm loc-set-default" data-idx="${idx}">Đặt mặc định</button>` : '<span class="tag" style="font-size:11px;">Mặc định</span>'}
+          <button class="btn btn-danger btn-sm loc-delete" data-idx="${idx}">Xóa</button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:14px;margin-bottom:5px;">Tên địa điểm</label>
+        <input type="text" class="loc-label-input" placeholder="Nhà riêng, Công ty, Kho,..." value="${Utils.escHtml(loc.label||'')}"/>
+      </div>
+
+      <!-- Tìm địa chỉ văn bản -->
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:14px;margin-bottom:5px;">Địa chỉ văn bản</label>
+        <div class="input-with-btn">
+          <input type="text" class="loc-addr-input" placeholder="Số nhà, đường, phường, quận,..." value="${Utils.escHtml(loc.address||'')}"/>
+          <button class="btn btn-secondary btn-sm loc-geocode-btn" style="white-space:nowrap;flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Tìm
+          </button>
+        </div>
+        <div class="geocode-results-list"></div>
+      </div>
+
+      <!-- Tọa độ GPS -->
+      <div class="coord-row" style="margin-bottom:8px;">
+        <div class="form-group">
+          <label style="font-size:14px;margin-bottom:5px;">Vĩ độ (Lat)</label>
+          <input type="text" class="loc-lat-input" inputmode="decimal" placeholder="10.7769" value="${loc.lat ? loc.lat.toFixed(7) : ''}"/>
+        </div>
+        <div class="form-group">
+          <label style="font-size:14px;margin-bottom:5px;">Kinh độ (Lng)</label>
+          <input type="text" class="loc-lng-input" inputmode="decimal" placeholder="106.7009" value="${loc.lng ? loc.lng.toFixed(7) : ''}"/>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm loc-gps-btn" style="margin-bottom:12px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+        Lấy GPS hiện tại
+      </button>
+
+      <!-- Mini map -->
+      <div class="loc-map" id="form-map-${idx}" style="height:200px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--bg);">
+        ${(loc.lat && loc.lng) ? '' : '<div class="map-offline-msg">Chạm bản đồ hoặc nhập tọa độ / địa chỉ để ghim vị trí</div>'}
+      </div>
+
+      <!-- Ghi chú địa điểm -->
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:14px;margin-bottom:5px;">Ghi chú địa điểm</label>
+        <textarea class="loc-note-input" rows="2" placeholder="Hướng dẫn tìm nhà, đặc điểm nhận dạng,...">${Utils.escHtml(loc.note||'')}</textarea>
+      </div>
+
+      <!-- Upload ảnh -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label style="font-size:14px;margin-bottom:5px;">Ảnh (cổng nhà, số nhà,...)</label>
+        <div class="photo-upload-area loc-upload-area">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <div style="font-size:14px;">Chụp ảnh hoặc chọn từ thư viện</div>
+          <input type="file" class="loc-photo-input" accept="image/*" multiple style="display:none;"/>
+        </div>
+        <div class="photo-upload-grid">${photoHTML}</div>
+      </div>
+    `;
+  }
+
+  function bindLocPanelEvents(panel, idx) {
+    const loc = locationsDraft[idx];
+
+    // Label input
+    panel.querySelector('.loc-label-input').addEventListener('input', e => {
+      loc.label = e.target.value;
+      panel.querySelector('.loc-item-name').textContent = `📍 ${e.target.value || `Địa điểm ${idx+1}`}`;
+    });
+
+    // Address input
+    panel.querySelector('.loc-addr-input').addEventListener('input', e => {
+      loc.address = e.target.value;
+    });
+
+    // Note input
+    panel.querySelector('.loc-note-input').addEventListener('input', e => {
+      loc.note = e.target.value;
+    });
+
+    // Lat/Lng inputs
+    const latInput = panel.querySelector('.loc-lat-input');
+    const lngInput = panel.querySelector('.loc-lng-input');
+    const updateMapFromCoords = () => {
+      const lat = parseFloat(latInput.value);
+      const lng = parseFloat(lngInput.value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        loc.lat = lat;
+        loc.lng = lng;
+        ensureFormMap(panel, idx, lat, lng);
+      }
+    };
+    latInput.addEventListener('change', updateMapFromCoords);
+    lngInput.addEventListener('change', updateMapFromCoords);
+
+    // GPS button
+    panel.querySelector('.loc-gps-btn').addEventListener('click', async () => {
+      const btn = panel.querySelector('.loc-gps-btn');
+      btn.disabled = true;
+      btn.textContent = 'Đang lấy GPS...';
+      try {
+        const { lat, lng } = await MapModule.getCurrentPosition();
+        loc.lat = lat; loc.lng = lng;
+        latInput.value = lat.toFixed(7);
+        lngInput.value = lng.toFixed(7);
+        ensureFormMap(panel, idx, lat, lng, true);
+
+        // Reverse geocode nếu có mạng
+        if (navigator.onLine) {
+          panel.querySelector('.loc-addr-input').placeholder = 'Đang tra cứu địa chỉ...';
+          try {
+            const addr = await MapModule.reverseGeocode(lat, lng);
+            if (addr && !loc.address) {
+              loc.address = addr;
+              panel.querySelector('.loc-addr-input').value = addr;
+            }
+          } catch(e) {
+            // Im lặng — giữ tọa độ, cho phép nhập địa chỉ thủ công
+          }
+          panel.querySelector('.loc-addr-input').placeholder = 'Số nhà, đường, phường, quận,...';
+        }
+        Toast.success('Đã lấy vị trí GPS');
+      } catch(err) {
+        Toast.error(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg> Lấy GPS hiện tại`;
+      }
+    });
+
+    // Geocode button
+    const geocodeBtn = panel.querySelector('.loc-geocode-btn');
+    const geocodeList = panel.querySelector('.geocode-results-list');
+    geocodeBtn.addEventListener('click', () => doForwardGeocode(panel, idx));
+    panel.querySelector('.loc-addr-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); doForwardGeocode(panel, idx); }
+    });
+
+    async function doForwardGeocode(panel, idx) {
+      const q = panel.querySelector('.loc-addr-input').value.trim();
+      if (!q) { Toast.info('Nhập địa chỉ để tìm'); return; }
+      if (!navigator.onLine) { Toast.info('Cần kết nối Internet để tìm địa chỉ'); return; }
+      geocodeBtn.disabled = true;
+      geocodeList.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--text-sec);">Đang tìm...</div>';
+      geocodeList.classList.add('open');
+      try {
+        const results = await MapModule.forwardGeocode(q);
+        if (!results.length) {
+          geocodeList.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--danger);">Không tìm thấy địa chỉ</div>';
+          return;
+        }
+        geocodeList.innerHTML = results.map((r,i) => `
+          <div class="geocode-item" data-idx="${i}" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${Utils.escHtml(r.display_name)}">
+            ${Utils.escHtml(r.display_name)}
+          </div>`).join('');
+        geocodeList.querySelectorAll('.geocode-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const lat = parseFloat(item.dataset.lat);
+            const lon = parseFloat(item.dataset.lon);
+            const name = item.dataset.name;
+            loc.lat = lat; loc.lng = lon;
+            if (!loc.address) { loc.address = name; panel.querySelector('.loc-addr-input').value = name; }
+            panel.querySelector('.loc-lat-input').value = lat.toFixed(7);
+            panel.querySelector('.loc-lng-input').value = lon.toFixed(7);
+            ensureFormMap(panel, idx, lat, lon, true);
+            geocodeList.classList.remove('open');
+          });
+        });
+      } catch(err) {
+        geocodeList.innerHTML = `<div style="padding:10px;font-size:13px;color:var(--danger);">Lỗi: ${err.message}</div>`;
+      } finally {
+        geocodeBtn.disabled = false;
+      }
+    }
+
+    // Photo upload
+    const uploadArea = panel.querySelector('.loc-upload-area');
+    const photoInput = panel.querySelector('.loc-photo-input');
+    uploadArea.addEventListener('click', () => photoInput.click());
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor='var(--blue)'; });
+    uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor=''; });
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault(); uploadArea.style.borderColor='';
+      if (e.dataTransfer.files.length) processPhotos(e.dataTransfer.files, idx, panel);
+    });
+    photoInput.addEventListener('change', () => {
+      if (photoInput.files.length) processPhotos(photoInput.files, idx, panel);
+      photoInput.value = '';
+    });
+
+    // Delete location
+    panel.querySelector('.loc-delete').addEventListener('click', () => {
+      Modal.confirm({
+        title: 'Xóa địa điểm?',
+        body: `Xóa địa điểm "<strong>${Utils.escHtml(loc.label || `Địa điểm ${idx+1}`)}</strong>" và tất cả ảnh liên quan?`,
+        confirmLabel: 'Xóa',
+        onConfirm: () => {
+          // Giải phóng preview URLs
+          loc.photos.forEach(p => { if (p.previewUrl) ImageModule.revokeUrl(p.previewUrl); });
+          locationsDraft.splice(idx, 1);
+          // Đảm bảo vẫn có 1 mặc định
+          if (locationsDraft.length && !locationsDraft.some(l => l.isDefault)) {
+            locationsDraft[0].isDefault = true;
+          }
+          renderLocationsEditor();
+        }
+      });
+    });
+
+    // Set default
+    panel.querySelector('.loc-set-default')?.addEventListener('click', () => {
+      locationsDraft.forEach(l => l.isDefault = false);
+      loc.isDefault = true;
+      renderLocationsEditor();
+    });
+
+    // Photo remove
+    const photoGrid = panel.querySelector('.photo-upload-grid');
+    photoGrid.addEventListener('click', e => {
+      const btn = e.target.closest('.photo-remove-btn');
+      if (!btn) return;
+      const pi = parseInt(btn.dataset.pidx);
+      const removed = loc.photos.splice(pi, 1)[0];
+      if (removed?.previewUrl) ImageModule.revokeUrl(removed.previewUrl);
+      renderLocationsEditor(); // Re-render toàn bộ để cập nhật index
+    });
+
+    // Khởi tạo mini map nếu đã có tọa độ
+    if (loc.lat && loc.lng) {
+      setTimeout(() => ensureFormMap(panel, idx, loc.lat, loc.lng), 50);
+    }
+  }
+
+  function ensureFormMap(panel, idx, lat, lng, fly = false) {
+    const mapId = `form-map-${idx}`;
+    const mapEl = panel.querySelector(`#${mapId}`);
+    if (!mapEl) return;
+
+    // Reset content nếu đang hiện placeholder text
+    if (mapEl.querySelector('.map-offline-msg')) {
+      mapEl.innerHTML = '';
+    }
+
+    // Lấy hoặc tạo instance
+    if (!mapEl._leafletMap) {
+      try {
+        const map = L.map(mapEl, { center: [lat, lng], zoom: 17 });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19
+        }).addTo(map);
+
+        // Click bản đồ để di chuyển marker
+        map.on('click', async (e) => {
+          const { lat: clat, lng: clng } = e.latlng;
+          locationsDraft[idx].lat = clat;
+          locationsDraft[idx].lng = clng;
+          MapModule.setMarker(map, clat, clng, true, (la, lo) => {
+            locationsDraft[idx].lat = la;
+            locationsDraft[idx].lng = lo;
+            panel.querySelector('.loc-lat-input').value = la.toFixed(7);
+            panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
+          });
+          panel.querySelector('.loc-lat-input').value = clat.toFixed(7);
+          panel.querySelector('.loc-lng-input').value = clng.toFixed(7);
+
+          // Auto reverse geocode
+          if (navigator.onLine && !locationsDraft[idx].address) {
+            try {
+              const addr = await MapModule.reverseGeocode(clat, clng);
+              if (addr) {
+                locationsDraft[idx].address = addr;
+                panel.querySelector('.loc-addr-input').value = addr;
+              }
+            } catch(e) {}
+          }
+        });
+
+        MapModule.setMarker(map, lat, lng, true, (la, lo) => {
+          locationsDraft[idx].lat = la;
+          locationsDraft[idx].lng = lo;
+          panel.querySelector('.loc-lat-input').value = la.toFixed(7);
+          panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
+        });
+
+        mapEl._leafletMap = map;
+      } catch(err) {
+        mapEl.innerHTML = `<div class="map-offline-msg">Không tải được bản đồ (cần Internet)</div>`;
+        return;
+      }
+    } else {
+      MapModule.setMarker(mapEl._leafletMap, lat, lng, true, (la, lo) => {
+        locationsDraft[idx].lat = la;
+        locationsDraft[idx].lng = lo;
+        panel.querySelector('.loc-lat-input').value = la.toFixed(7);
+        panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
+      });
+    }
+
+    if (fly) {
+      mapEl._leafletMap.flyTo([lat, lng], 17, { animate: true });
+    } else {
+      mapEl._leafletMap.setView([lat, lng], 17);
+    }
+  }
+
+  async function processPhotos(files, idx, panel) {
+    const loc = locationsDraft[idx];
+    const fileArr = Array.from(files);
+
+    for (const file of fileArr) {
+      if (!file.type.startsWith('image/')) { Toast.error(`${file.name} không phải file ảnh`); continue; }
+      try {
+        const blob = await ImageModule.compress(file);
+        const previewUrl = ImageModule.createPreviewUrl(blob);
+        const photoEntry = { id: Utils.uuid(), blob, previewUrl, isNew: true };
+        loc.photos.push(photoEntry);
+
+        // Thêm preview mà không re-render toàn bộ
+        const grid = panel.querySelector('.photo-upload-grid');
+        const item = document.createElement('div');
+        item.className = 'photo-preview-item';
+        const pi = loc.photos.length - 1;
+        item.innerHTML = `<img src="${previewUrl}" alt="Ảnh mới"/><button class="photo-remove-btn" data-pidx="${pi}" aria-label="Xóa ảnh">×</button>`;
+        item.querySelector('.photo-remove-btn').addEventListener('click', () => {
+          const removed = loc.photos.splice(pi, 1)[0];
+          if (removed?.previewUrl) ImageModule.revokeUrl(removed.previewUrl);
+          renderLocationsEditor();
+        });
+        grid.appendChild(item);
+      } catch(err) {
+        Toast.error(`Lỗi xử lý ảnh: ${err.message}`);
+      }
+    }
+  }
+
+  function destroyFormMap() {
+    // Hủy tất cả Leaflet maps trong form
+    document.querySelectorAll('[id^="form-map-"]').forEach(el => {
+      if (el._leafletMap) {
+        el._leafletMap.remove();
+        el._leafletMap = null;
+      }
+    });
+  }
+
+  async function save() {
+    const phone = document.getElementById('f-phone').value.trim();
+    const name  = document.getElementById('f-name').value.trim();
+    const note  = document.getElementById('f-note').value.trim();
+
+    // Validation
+    const errEl = document.getElementById('f-phone-error');
+    if (!phone) {
+      errEl.textContent = 'Số điện thoại là bắt buộc';
+      errEl.style.display = 'block';
+      document.getElementById('f-phone').focus();
+      return;
+    }
+    errEl.style.display = 'none';
+
+    // Kiểm tra trùng số điện thoại
+    if (!editingCustomerId) {
+      const existing = await DB.searchCustomers(phone);
+      const match = existing.find(c => Utils.normalizePhone(c.phone) === Utils.normalizePhone(phone));
+      if (match) {
+        const proceed = await new Promise(res => {
+          Modal.open({
+            title: 'Số điện thoại đã tồn tại',
+            body: `<p>Khách hàng <strong>${Utils.escHtml(match.name || match.phone)}</strong> đã dùng số này.</p>
+                   <p style="margin-top:8px;color:var(--text-sec);font-size:14px;">Bạn có muốn tiếp tục tạo hồ sơ mới không?</p>`,
+            buttons: [
+              { label: 'Hủy', cls: 'btn-secondary', onClick: () => res(false) },
+              { label: 'Tiếp tục', cls: 'btn-primary', onClick: () => res(true) }
+            ]
+          });
+        });
+        if (!proceed) return;
+      }
+    }
+
+    Loading.show('Đang lưu...');
+    try {
+      const custData = {
+        id: editingCustomerId || Utils.uuid(),
+        phone,
+        name,
+        note,
+        deliveryCount: lastDeliverCount,
+        lastDelivery:  lastDeliverDate,
+      };
+
+      const savedCust = await DB.saveCustomer(custData);
+
+      // Lưu locations
+      const savedLocIds = new Set();
+      for (const loc of locationsDraft) {
+        const locData = {
+          id: loc.id,
+          customerId: savedCust.id,
+          label: loc.label,
+          address: loc.address,
+          lat: loc.lat,
+          lng: loc.lng,
+          note: loc.note,
+          isDefault: loc.isDefault,
+        };
+        await DB.saveLocation(locData);
+        savedLocIds.add(loc.id);
+
+        // Lưu ảnh mới
+        for (const photo of loc.photos) {
+          if (photo.isNew && photo.blob) {
+            await DB.savePhoto({
+              id: photo.id,
+              locationId: loc.id,
+              blob: photo.blob,
+            });
+          }
+        }
+      }
+
+      // Xóa locations cũ không còn trong draft (khi edit)
+      if (editingCustomerId) {
+        const existing = await DB.getLocationsByCustomer(editingCustomerId);
+        for (const existLoc of existing) {
+          if (!savedLocIds.has(existLoc.id)) {
+            await DB.deleteLocation(existLoc.id);
+          }
+        }
+      }
+
+      Toast.success(editingCustomerId ? 'Đã cập nhật thành công!' : 'Đã thêm khách hàng mới!');
+      destroyFormMap();
+
+      // Giải phóng preview URLs
+      locationsDraft.forEach(loc => {
+        loc.photos.forEach(p => { if (p.previewUrl) ImageModule.revokeUrl(p.previewUrl); });
+      });
+
+      // Chuyển về trang chủ và hiện khách vừa lưu
+      ScreenManager.show('home');
+      document.getElementById('search-input').value = phone;
+      document.getElementById('search-clear').classList.add('visible');
+      await CustomerModule.selectCustomer(savedCust.id);
+      reset();
+    } catch(err) {
+      Toast.error('Lỗi lưu dữ liệu: ' + err.message);
+    } finally {
+      Loading.hide();
+    }
+  }
+
+  return { openAdd, openEdit, save, addLocationDraft };
+})();
+
+// ============================================================
+// MODULE: BackupModule — Export/Import JSON
+// ============================================================
+const BackupModule = (() => {
+  async function refreshStats() {
+    try {
+      const all = await DB.getAllCustomers();
+      document.getElementById('backup-stats').textContent = `${all.length} khách hàng trong cơ sở dữ liệu`;
+    } catch(e) {}
+  }
+
+  async function exportData() {
+    Loading.show('Đang xuất dữ liệu...');
+    try {
+      const data = await DB.exportAll();
+      const payload = {
+        schemaVersion: 2,
+        appName: 'SoGiaoHang',
+        exportedAt: new Date().toISOString(),
+        ...data
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const date = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = `so-giao-hang-backup-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      Toast.success(`Đã xuất file sao lưu: so-giao-hang-backup-${date}.json`);
+    } catch(err) {
+      Toast.error('Lỗi xuất dữ liệu: ' + err.message);
+    } finally {
+      Loading.hide();
+    }
+  }
+
+  async function importFromFile(file) {
+    if (!file) return;
+    if (!file.name.endsWith('.json')) { Toast.error('Vui lòng chọn file .json'); return; }
+    if (file.size > 100 * 1024 * 1024) { Toast.error('File quá lớn (tối đa 100MB)'); return; }
+
+    Loading.show('Đang đọc file...');
+    let parsed;
+    try {
+      const text = await Utils.readFileAsText(file);
+      parsed = JSON.parse(text);
+    } catch(err) {
+      Loading.hide();
+      Toast.error('File JSON không hợp lệ: ' + err.message);
+      return;
+    }
+
+    // Kiểm tra cấu trúc
+    if (!parsed.schemaVersion || !Array.isArray(parsed.customers)) {
+      Loading.hide();
+      Toast.error('File sao lưu không đúng định dạng Sổ Giao Hàng');
+      return;
+    }
+
+    Loading.hide();
+
+    const custCount = parsed.customers.length;
+    const locCount  = (parsed.locations || []).length;
+    const photoCount = (parsed.photos || []).length;
+
+    // Modal xem trước và chọn chế độ
+    Modal.open({
+      title: 'Khôi Phục Dữ Liệu',
+      body: `
+        <p style="margin-bottom:12px;">File sao lưu chứa:</p>
+        <ul style="margin-left:16px;margin-bottom:16px;line-height:2;">
+          <li><strong>${custCount}</strong> khách hàng</li>
+          <li><strong>${locCount}</strong> địa chỉ</li>
+          <li><strong>${photoCount}</strong> ảnh</li>
+        </ul>
+        <p style="font-size:14px;color:var(--text-sec);margin-bottom:12px;">Xuất bản: ${parsed.exportedAt || 'không rõ'}</p>
+        <p style="font-size:14px;color:var(--danger);">⚠️ "Thay thế toàn bộ" sẽ xóa vĩnh viễn dữ liệu hiện tại.</p>
+      `,
+      buttons: [
+        { label: 'Hủy', cls: 'btn-secondary' },
+        { label: 'Gộp dữ liệu', cls: 'btn-secondary', onClick: () => doImport(parsed, false) },
+        { label: 'Thay thế toàn bộ', cls: 'btn-danger', onClick: () => doImport(parsed, true) }
+      ]
+    });
+  }
+
+  async function doImport(data, replace) {
+    Loading.show(replace ? 'Đang xóa và khôi phục...' : 'Đang gộp dữ liệu...');
+    try {
+      if (replace) {
+        await DB.importReplace(data);
+      } else {
+        await DB.importMerge(data);
+      }
+      Toast.success('Khôi phục thành công!');
+      refreshStats();
+    } catch(err) {
+      Toast.error('Lỗi khôi phục: ' + err.message + ' (Dữ liệu cũ được giữ nguyên nếu lỗi xảy ra trước khi xóa)');
+    } finally {
+      Loading.hide();
+    }
+  }
+
+  return { refreshStats, exportData, importFromFile };
+})();
+
+// ============================================================
+// MODULE: SettingsModule
+// ============================================================
+const SettingsModule = (() => {
+  async function init() {
+    // Storage info
+    try {
+      const info = await DB.getStorageInfo();
+      document.getElementById('storage-info').textContent = info;
+    } catch(e) {}
+
+    // SW status
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      document.getElementById('sw-status').textContent = reg ? 'Đang hoạt động' : 'Chưa đăng ký';
+    } else {
+      document.getElementById('sw-status').textContent = 'Không được hỗ trợ';
+    }
+  }
+
+  async function checkUpdate() {
+    if (!('serviceWorker' in navigator)) {
+      Toast.info('Service Worker không được hỗ trợ trên trình duyệt này');
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.update();
+        Toast.success('Đã kiểm tra cập nhật. Tải lại trang nếu có phiên bản mới.');
+      } else {
+        Toast.info('Service Worker chưa được đăng ký');
+      }
+    } catch(err) {
+      Toast.error('Lỗi kiểm tra cập nhật: ' + err.message);
+    }
+  }
+
+  async function clearAllData() {
+    Modal.confirm({
+      title: 'Xóa Toàn Bộ Dữ Liệu',
+      body: `<p>Thao tác này sẽ xóa vĩnh viễn toàn bộ khách hàng, địa chỉ, ảnh và lịch sử giao hàng.</p>
+             <p style="margin-top:10px;color:var(--danger);font-weight:600;">Không thể hoàn tác!</p>`,
+      confirmLabel: 'Xóa Toàn Bộ',
+      onConfirm: async () => {
+        Loading.show('Đang xóa...');
+        try {
+          const all = await DB.getAllCustomers();
+          for (const c of all) await DB.deleteCustomer(c.id);
+          Toast.success('Đã xóa toàn bộ dữ liệu');
+        } catch(err) {
+          Toast.error('Lỗi xóa: ' + err.message);
+        } finally {
+          Loading.hide();
+        }
+      }
+    });
+  }
+
+  return { init, checkUpdate, clearAllData };
+})();
+
+// ============================================================
+// MAIN: Khởi tạo ứng dụng
+// ============================================================
+async function initApp() {
+  // Khởi tạo DB
+  try {
+    await DB.open();
+  } catch(err) {
+    Toast.error('Lỗi mở cơ sở dữ liệu: ' + err.message);
+  }
+
+  // Đồng hồ
+  ClockModule.start();
+
+  // Điều hướng thanh phím tắt (Bottom Navigation)
+  document.querySelectorAll('.bn-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const screen = item.dataset.screen;
+      if (!screen) return;
+      if (screen === 'add' && !item.dataset.editId) {
+        FormModule.openAdd();
+      } else {
+        ScreenManager.show(screen);
+      }
+    });
+  });
+
+  // Sort buttons (List)
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      CustomerModule.renderList();
+    });
+  });
+
+  // Form save / cancel
+  document.getElementById('btn-save-customer').addEventListener('click', () => FormModule.save());
+  document.getElementById('btn-cancel-add').addEventListener('click', () => ScreenManager.show('home'));
+  document.getElementById('btn-add-location').addEventListener('click', () => FormModule.addLocationDraft());
+
+  // From list → Add
+  document.getElementById('btn-go-add-from-list').addEventListener('click', () => FormModule.openAdd());
+
+  // Backup buttons
+  document.getElementById('btn-export').addEventListener('click', () => BackupModule.exportData());
+  document.getElementById('btn-import').addEventListener('click', () => {
+    document.getElementById('restore-file').click();
+  });
+  document.getElementById('restore-file').addEventListener('change', e => {
+    BackupModule.importFromFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Settings
+  document.getElementById('btn-update-sw').addEventListener('click', () => SettingsModule.checkUpdate());
+  document.getElementById('btn-clear-all').addEventListener('click', () => SettingsModule.clearAllData());
+
+  // Search
+  CustomerModule.initSearchListeners();
+
+  // Lightbox
+  CustomerModule.initLightbox();
+
+  // PWA: Cập nhật SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker?.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('update-banner').classList.add('show');
+          }
+        });
+      });
+    }).catch(err => console.warn('SW registration failed:', err));
+  }
+
+  document.getElementById('btn-update-reload').addEventListener('click', () => {
+    navigator.serviceWorker?.getRegistration().then(reg => {
+      reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    });
+    window.location.reload();
+  });
+
+  // Handle URL params (shortcut links từ manifest)
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramScreen = urlParams.get('screen');
+  if (paramScreen === 'add') FormModule.openAdd();
+  else if (paramScreen === 'list') ScreenManager.show('list');
+
+  // Kiểm tra IndexedDB availability
+  if (!window.indexedDB) {
+    Toast.error('Trình duyệt không hỗ trợ IndexedDB. Ứng dụng không thể lưu dữ liệu.');
+  }
+}
+
+// Khởi động khi DOM sẵn sàng
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>

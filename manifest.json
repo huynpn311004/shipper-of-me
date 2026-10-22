@@ -1,0 +1,49 @@
+{
+  "name": "Sổ Giao Hàng",
+  "short_name": "Giao Hàng",
+  "description": "Ứng dụng sổ giao hàng & quản lý khách hàng cho shipper",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563EB",
+  "background_color": "#F8FAFC",
+  "lang": "vi",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Thêm Khách Hàng",
+      "short_name": "Thêm",
+      "description": "Thêm khách hàng mới",
+      "url": "./index.html?screen=add",
+      "icons": [{ "src": "icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Danh Sách",
+      "short_name": "Danh Sách",
+      "description": "Danh sách khách hàng",
+      "url": "./index.html?screen=list",
+      "icons": [{ "src": "icon.svg", "sizes": "any" }]
+    }
+  ]
+}
