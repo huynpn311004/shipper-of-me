@@ -9,13 +9,11 @@
   <meta name="apple-mobile-web-app-title" content="Giao Hàng"/>
   <meta name="description" content="Ứng dụng sổ giao hàng & quản lý khách hàng dành cho shipper"/>
   <meta name="theme-color" content="#2563EB"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data:; manifest-src 'self';"/>
   <title>Sổ Giao Hàng</title>
   <link rel="manifest" href="manifest.json"/>
   <link rel="icon" href="4-icon-shipper_9937d5a87ccd40c686194426bf740106_grande.webp" type="image/webp"/>
   <link rel="apple-touch-icon" href="4-icon-shipper_9937d5a87ccd40c686194426bf740106_grande.webp" type="image/webp"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <link rel="stylesheet" href="styles.css"/>
 
@@ -214,26 +212,6 @@
         </div>
       </div>
 
-      <!-- Group: Bản Đồ & GPS -->
-      <div class="setting-group">
-        <div class="setting-group-title">Bản Đồ &amp; Định Vị</div>
-        <div class="setting-item">
-          <div>
-            <div class="setting-item-label">Google Maps</div>
-            <div class="setting-item-sub">Google Maps JavaScript API &amp; Geocoding API</div>
-          </div>
-        </div>
-        <div class="setting-body" style="padding-top: 12px; padding-bottom: 12px;">
-          <div class="setting-inline-form">
-            <label for="google-maps-api-key" class="setting-key-label">API key</label>
-            <div class="setting-inline-row">
-              <input id="google-maps-api-key" type="text" placeholder="Nhập API key Google Maps" autocomplete="off"/>
-              <button class="btn btn-primary btn-sm" id="btn-save-google-key">Lưu</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Group: Quyền Riêng Tư -->
       <div class="setting-group">
         <div class="setting-group-title">Quyền Riêng Tư</div>
@@ -345,9 +323,20 @@ const Utils = (() => {
     });
   }
 
-  // Chuẩn hóa số điện thoại: xóa khoảng trắng, dấu '-', '.'
+  // Chuẩn hóa số điện thoại: giữ chữ số, bỏ mọi ký tự không phải số
   function normalizePhone(phone) {
-    return phone.replace(/[\s\-\.\(\)]/g, '');
+    return String(phone ?? '').replace(/\D/g, '');
+  }
+
+  // Kiểm tra số điện thoại hợp lệ cho Việt Nam
+  function isValidPhoneNumber(phone) {
+    const digits = normalizePhone(phone);
+    if (!digits) return false;
+
+    // Số di động / số máy bàn Việt Nam: 10-11 chữ số, bắt đầu 0 hoặc 84
+    if (digits.startsWith('84')) return digits.length === 11;
+    if (digits.startsWith('0')) return digits.length >= 9 && digits.length <= 11;
+    return digits.length >= 8 && digits.length <= 11;
   }
 
   // Format ngày giờ hiển thị
@@ -428,8 +417,74 @@ const Utils = (() => {
     return new Blob([arr], { type: mime });
   }
 
+  function bytesToBase64(bytes) {
+    let binary = '';
+    const u8 = new Uint8Array(bytes);
+    for (let i = 0; i < u8.length; i++) binary += String.fromCharCode(u8[i]);
+    return btoa(binary);
+  }
+
+  function base64ToBytes(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  async function encryptText(value, password) {
+    if (!password || !password.trim()) return null;
+    if (!window.crypto || !crypto.subtle) {
+      throw new Error('Trình duyệt của bạn không hỗ trợ mã hóa an toàn.');
+    }
+
+    const encoder = new TextEncoder();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt']
+    );
+
+    const cipherBytes = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(value));
+    return {
+      encrypted: true,
+      version: 1,
+      salt: bytesToBase64(salt),
+      iv: bytesToBase64(iv),
+      ciphertext: bytesToBase64(new Uint8Array(cipherBytes))
+    };
+  }
+
+  async function decryptText(payload, password) {
+    if (!payload || !payload.encrypted) return payload;
+    if (!window.crypto || !crypto.subtle) {
+      throw new Error('Trình duyệt của bạn không hỗ trợ giải mã an toàn.');
+    }
+
+    const encoder = new TextEncoder();
+    const salt = base64ToBytes(payload.salt);
+    const iv = base64ToBytes(payload.iv);
+    const ciphertext = base64ToBytes(payload.ciphertext);
+    const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+
+    const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+    return new TextDecoder().decode(plainBuffer);
+  }
+
   return { uuid, normalizePhone, fmtDateTime, fmtDate, initials, escHtml, debounce,
-           readFileAsArrayBuffer, readFileAsText, blobToBase64, base64ToBlob };
+           readFileAsArrayBuffer, readFileAsText, blobToBase64, base64ToBlob,
+           bytesToBase64, base64ToBytes, encryptText, decryptText };
 })();
 
 // ============================================================
@@ -909,132 +964,29 @@ const ImageModule = (() => {
 })();
 
 // ============================================================
-// MODULE: MapModule — Google Maps
+// MODULE: MapModule — Bản đồ đã tắt cho app offline & bảo mật cao
 // ============================================================
 const MapModule = (() => {
   const instances = {};
-  let googleMapsLoader = null;
-
-  async function getGoogleApiKey() {
-    try {
-      const saved = await DB.getSetting('googleMapsApiKey', localStorage.getItem('googleMapsApiKey') || '');
-      return saved || localStorage.getItem('googleMapsApiKey') || '';
-    } catch (err) {
-      return localStorage.getItem('googleMapsApiKey') || '';
-    }
-  }
 
   function renderPlaceholder(container, message) {
     if (!container) return;
     container.innerHTML = `<div class="map-offline-msg">${message}</div>`;
   }
 
-  async function ensureGoogleMapsReady() {
-    const key = await getGoogleApiKey();
-    if (!key) return false;
-    if (window.google && window.google.maps) return true;
-    if (googleMapsLoader) return googleMapsLoader;
-
-    googleMapsLoader = new Promise(resolve => {
-      const existingScript = document.querySelector('script[data-google-maps-sdk]');
-      if (existingScript) {
-        existingScript.addEventListener('load', () => resolve(true), { once: true });
-        existingScript.addEventListener('error', () => resolve(false), { once: true });
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=vi`;
-      script.async = true;
-      script.defer = true;
-      script.dataset.googleMapsSdk = 'true';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
-
-    return googleMapsLoader;
-  }
-
   async function init(containerId, options = {}) {
-    if (instances[containerId]) {
-      setTimeout(() => {
-        if (instances[containerId]) {
-          google.maps.event.trigger(instances[containerId], 'resize');
-        }
-      }, 100);
-      return instances[containerId];
-    }
-
     const el = document.getElementById(containerId);
     if (!el) return null;
-
-    const key = await getGoogleApiKey();
-    if (!key) {
-      renderPlaceholder(el, 'Chưa có Google Maps API key. Vào Cài đặt để nhập API key.');
-      return null;
-    }
-
-    const ready = await ensureGoogleMapsReady();
-    if (!ready || !window.google || !window.google.maps) {
-      renderPlaceholder(el, 'Google Maps chưa sẵn sàng. Kiểm tra lại API key.');
-      return null;
-    }
-
-    const lat = options.lat ?? 10.7769;
-    const lng = options.lng ?? 106.7009;
-    const zoom = options.zoom ?? 15;
-
-    const map = new google.maps.Map(el, {
-      center: { lat, lng },
-      zoom,
-      disableDefaultUI: false,
-      mapTypeControl: true,
-      streetViewControl: true,
-      fullscreenControl: true,
-      zoomControl: true,
-      gestureHandling: 'greedy'
-    });
-
-    instances[containerId] = map;
-    return map;
+    renderPlaceholder(el, 'Bản đồ đã được tắt để giữ ứng dụng hoạt động hoàn toàn offline và an toàn hơn cho tài khoản cá nhân.');
+    return null;
   }
 
   function destroy(containerId) {
-    if (instances[containerId]) {
-      delete instances[containerId];
-    }
+    if (instances[containerId]) delete instances[containerId];
   }
 
-  function setMarker(map, lat, lng, draggable = false, onDrag) {
-    if (!map || !window.google || !window.google.maps) return null;
-    if (map._gmMarker) {
-      map._gmMarker.setMap(null);
-    }
-
-    const marker = new google.maps.Marker({
-      position: { lat, lng },
-      map,
-      draggable,
-      animation: google.maps.Animation.DROP
-    });
-
-    if (draggable && onDrag) {
-      marker.addListener('dragend', () => {
-        const pos = marker.getPosition();
-        onDrag(pos.lat(), pos.lng());
-      });
-    }
-
-    map._gmMarker = marker;
-    return marker;
-  }
-
-  function flyTo(map, lat, lng, zoom = 17) {
-    if (!map || !window.google || !window.google.maps) return;
-    map.panTo({ lat, lng });
-    map.setZoom(zoom);
-  }
+  function setMarker() { return null; }
+  function flyTo() {}
 
   function getCurrentPosition() {
     return new Promise((resolve, reject) => {
@@ -1057,43 +1009,10 @@ const MapModule = (() => {
     });
   }
 
-  async function reverseGeocode(lat, lng) {
-    const key = await getGoogleApiKey();
-    if (!key) throw new Error('Chưa có Google Maps API key');
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${encodeURIComponent(key)}&language=vi`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Dịch vụ không phản hồi');
-    const data = await res.json();
-    return data.status === 'OK' && data.results[0] ? data.results[0].formatted_address : '';
-  }
+  function reverseGeocode() { return ''; }
+  function forwardGeocode() { return []; }
 
-  async function forwardGeocode(query) {
-    const key = await getGoogleApiKey();
-    if (!key) throw new Error('Chưa có Google Maps API key');
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:VN&key=${encodeURIComponent(key)}&language=vi`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Dịch vụ không phản hồi');
-    const data = await res.json();
-    if (data.status !== 'OK' || !Array.isArray(data.results)) return [];
-    return data.results.map(item => ({
-      display_name: item.formatted_address,
-      lat: item.geometry.location.lat,
-      lon: item.geometry.location.lng
-    }));
-  }
-
-  const api = {
-    init,
-    destroy,
-    setMarker,
-    flyTo,
-    getCurrentPosition,
-    reverseGeocode,
-    forwardGeocode,
-    ensureGoogleMapsReady,
-    instances
-  };
-  return api;
+  return { init, destroy, setMarker, flyTo, getCurrentPosition, reverseGeocode, forwardGeocode, instances, renderPlaceholder };
 })();
 
 // ============================================================
@@ -1261,8 +1180,7 @@ const CustomerModule = (() => {
 
     const photosHTML = activeLoc && activeLoc._photos && activeLoc._photos.length > 0 ?
       `<div class="section-title" style="margin-top:16px;">Ảnh Thực Tế</div>
-       <div class="photo-grid" id="photo-grid-view">${buildPhotosHTML(activeLoc._photos)}</div>` :
-      `<div style="margin-top:12px;font-size:14px;color:var(--text-sec);">Chưa có ảnh cho địa điểm này</div>`;
+       <div class="photo-grid" id="photo-grid-view">${buildPhotosHTML(activeLoc._photos)}</div>` : '';
 
     const recentEvents = events.slice(0, 5);
     const histHTML = recentEvents.length ? recentEvents.map(ev => `
@@ -1310,9 +1228,6 @@ const CustomerModule = (() => {
       <!-- Địa chỉ active -->
       <div id="active-loc-container">${locHTML}</div>
 
-      <!-- Bản đồ -->
-      <div id="map" role="application" aria-label="Bản đồ vị trí"></div>
-
       <!-- Ảnh -->
       ${photosHTML}
 
@@ -1335,8 +1250,8 @@ const CustomerModule = (() => {
 
   function buildLocationHTML(loc) {
     const hasCoords = loc.lat && loc.lng;
-    const gmUrl = hasCoords ?
-      `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}` : '';
+    const mapsQuery = encodeURIComponent(loc.address || loc.label || 'Địa chỉ giao hàng');
+    const gmUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
     return `
       <div class="addr-card">
@@ -1345,15 +1260,13 @@ const CustomerModule = (() => {
           ${loc.isDefault ? '<span class="tag" style="font-size:11px;">Mặc định</span>' : ''}
         </div>
         <div class="addr-text">${Utils.escHtml(loc.address || 'Chưa có địa chỉ văn bản')}</div>
-        ${hasCoords ? `<div class="addr-coords">📍 ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</div>` : '<div class="addr-coords text-sec">Chưa có tọa độ GPS</div>'}
+        ${hasCoords ? `<div class="addr-coords">📍 ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</div>` : ''}
         ${loc.note ? `<div class="cust-note" style="margin-top:8px;">${Utils.escHtml(loc.note)}</div>` : ''}
         <div class="action-row" style="margin-top:12px;margin-bottom:0;">
-          ${hasCoords ? `
-            <a class="btn btn-primary" href="${gmUrl}" target="_blank" rel="noopener noreferrer" id="btn-gmaps">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-              Chỉ đường
-            </a>` : `
-            <span class="btn btn-secondary" style="cursor:default;opacity:.6;">Chưa có tọa độ</span>`}
+          <a class="btn btn-primary" href="${gmUrl}" target="_blank" rel="noopener noreferrer" id="btn-gmaps">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            Chuyển Google Maps
+          </a>
         </div>
       </div>`;
   }
@@ -1463,42 +1376,9 @@ const CustomerModule = (() => {
   async function initViewMap(lat, lng) {
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
-
-    if (instances['map'] && instances['map']._gmMap) {
-      instances['map']._gmMap.setCenter({ lat, lng });
-      instances['map']._gmMap.setZoom(17);
-      MapModule.setMarker(instances['map']._gmMap, lat, lng, false);
-      return;
-    }
-
-    if (lat && lng) {
-      try {
-        const ready = await MapModule.ensureGoogleMapsReady();
-        if (!ready || !window.google || !window.google.maps) {
-          mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg><span>Google Maps chưa sẵn sàng</span></div>`;
-          return;
-        }
-
-        mapEl.innerHTML = '';
-        const map = new google.maps.Map(mapEl, {
-          center: { lat, lng },
-          zoom: 17,
-          disableDefaultUI: false,
-          mapTypeControl: true,
-          streetViewControl: true,
-          fullscreenControl: true,
-          zoomControl: true,
-          gestureHandling: 'greedy'
-        });
-
-        MapModule.setMarker(map, lat, lng, false);
-        instances['map'] = { _gmMap: map };
-      } catch (err) {
-        mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg><span>Không tải được bản đồ</span></div>`;
-      }
-    } else {
-      mapEl.innerHTML = `<div class="map-offline-msg"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Chưa có tọa độ GPS</span></div>`;
-    }
+    mapEl.style.display = 'none';
+    mapEl.innerHTML = '';
+    return;
   }
 
   function bindPhotoThumbs(container, photos, ctx) {
@@ -1943,6 +1823,8 @@ const FormModule = (() => {
       </div>`;
     }).join('');
 
+    const mapsQuery = encodeURIComponent(loc.address || loc.label || 'Địa chỉ giao hàng');
+
     return `
       <div class="loc-item-header">
         <div class="loc-item-name">📍 ${Utils.escHtml(loc.label || `Địa điểm ${idx+1}`)}</div>
@@ -1958,12 +1840,8 @@ const FormModule = (() => {
       </div>
 
       <div class="form-group loc-field-box" style="margin-bottom:12px;">
-        <div class="field-box-label">Địa chỉ</div>
-        <input type="text" class="loc-addr-input" placeholder="Số nhà, đường, phường, quận,..." value="${Utils.escHtml(loc.address||'')}"/>
-      </div>
-
-      <div class="loc-map" id="form-map-${idx}" style="height:200px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--bg);cursor:pointer;">
-        ${(loc.lat && loc.lng) ? '' : '<div class="map-offline-msg">Nhấn vào bản đồ để chọn vị trí</div>'}
+        <div class="field-box-label">Địa chỉ giao hàng</div>
+        <textarea class="loc-addr-input" rows="3" placeholder="Số nhà, đường, phường, quận, tỉnh...">${Utils.escHtml(loc.address || '')}</textarea>
       </div>
 
       <div class="form-group" style="margin-bottom:0;">
@@ -1981,7 +1859,6 @@ const FormModule = (() => {
   function bindLocPanelEvents(panel, idx) {
     const loc = locationsDraft[idx];
     const addrInput = panel.querySelector('.loc-addr-input');
-    const mapEl = panel.querySelector('.loc-map');
 
     panel.querySelector('.loc-label-input').addEventListener('input', e => {
       loc.label = e.target.value;
@@ -1991,170 +1868,6 @@ const FormModule = (() => {
     addrInput.addEventListener('input', e => {
       loc.address = e.target.value;
     });
-
-    if (mapEl) {
-      mapEl.addEventListener('click', () => openLocationMapPopup(panel, idx));
-    }
-
-    if (loc.lat && loc.lng) {
-      setTimeout(() => ensureFormMap(panel, idx, loc.lat, loc.lng), 50);
-    }
-
-    async function openLocationMapPopup(panel, idx) {
-      const loc = locationsDraft[idx];
-      const initialLat = Number(loc.lat) || 10.7769;
-      const initialLng = Number(loc.lng) || 106.7009;
-      const body = `
-        <div class="loc-map-popup">
-          <div class="loc-map-popup-row">
-            <input id="loc-popup-address" class="loc-map-popup-input" type="text" value="${Utils.escHtml(loc.address || '')}" placeholder="Nhập địa chỉ để tìm"/>
-            <button class="btn btn-primary btn-sm" id="loc-popup-search">Tìm</button>
-          </div>
-          <div class="loc-map-popup-actions">
-            <button class="btn btn-secondary btn-sm" id="loc-popup-gps">Lấy GPS hiện tại</button>
-            <div class="loc-map-popup-coords">
-              <div class="loc-map-popup-coord">
-                <div class="loc-map-popup-label">Vĩ độ</div>
-                <input id="loc-popup-lat" type="text" value="${Number.isFinite(loc.lat) ? loc.lat.toFixed(7) : ''}" placeholder="--"/>
-              </div>
-              <div class="loc-map-popup-coord">
-                <div class="loc-map-popup-label">Kinh độ</div>
-                <input id="loc-popup-lng" type="text" value="${Number.isFinite(loc.lng) ? loc.lng.toFixed(7) : ''}" placeholder="--"/>
-              </div>
-            </div>
-          </div>
-          <div id="loc-popup-map" class="loc-map-popup-map"></div>
-        </div>
-      `;
-
-      Modal.open({
-        title: 'Chọn vị trí giao hàng',
-        body,
-        buttons: [{ label: 'Đóng', cls: 'btn-secondary' }]
-      });
-
-      const popupMapEl = document.getElementById('loc-popup-map');
-      const addrInput = document.getElementById('loc-popup-address');
-      const latInput = document.getElementById('loc-popup-lat');
-      const lngInput = document.getElementById('loc-popup-lng');
-      const searchBtn = document.getElementById('loc-popup-search');
-      const gpsBtn = document.getElementById('loc-popup-gps');
-
-      const setFromCoords = (lat, lng, addressValue = null) => {
-        const safeLat = Number(lat);
-        const safeLng = Number(lng);
-        if (!Number.isFinite(safeLat) || !Number.isFinite(safeLng)) return;
-        loc.lat = safeLat;
-        loc.lng = safeLng;
-        if (addressValue) {
-          loc.address = addressValue;
-          panel.querySelector('.loc-addr-input').value = addressValue;
-          addrInput.value = addressValue;
-        }
-        panel.querySelector('.loc-addr-input').value = loc.address || addrInput.value || '';
-        latInput.value = safeLat.toFixed(7);
-        lngInput.value = safeLng.toFixed(7);
-        ensureFormMap(panel, idx, safeLat, safeLng, true);
-      };
-
-      const map = new google.maps.Map(popupMapEl, {
-        center: { lat: initialLat, lng: initialLng },
-        zoom: 15,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
-        zoomControl: true,
-        gestureHandling: 'greedy'
-      });
-
-      const marker = new google.maps.Marker({
-        map,
-        position: { lat: initialLat, lng: initialLng },
-        draggable: true,
-        animation: google.maps.Animation.DROP
-      });
-
-      marker.addListener('dragend', async () => {
-        const p = marker.getPosition();
-        const lat = p.lat();
-        const lng = p.lng();
-        setFromCoords(lat, lng);
-        try {
-          const addr = await MapModule.reverseGeocode(lat, lng);
-          if (addr) setFromCoords(lat, lng, addr);
-        } catch (e) {}
-      });
-
-      map.addListener('click', async (e) => {
-        const lat = e.latLng.lat();
-        const lng = e.latLng.lng();
-        marker.setPosition({ lat, lng });
-        map.panTo({ lat, lng });
-        setFromCoords(lat, lng);
-        try {
-          const addr = await MapModule.reverseGeocode(lat, lng);
-          if (addr) setFromCoords(lat, lng, addr);
-        } catch (e) {}
-      });
-
-      searchBtn.addEventListener('click', async () => {
-        const q = addrInput.value.trim();
-        if (!q) {
-          Toast.info('Nhập địa chỉ để tìm');
-          return;
-        }
-        try {
-          const results = await MapModule.forwardGeocode(q);
-          if (!results.length) {
-            Toast.info('Không tìm thấy địa chỉ phù hợp');
-            return;
-          }
-          const first = results[0];
-          const lat = Number(first.lat);
-          const lng = Number(first.lon);
-          map.setCenter({ lat, lng });
-          marker.setPosition({ lat, lng });
-          setFromCoords(lat, lng, first.display_name);
-        } catch (err) {
-          Toast.error(err.message || 'Lỗi tìm địa chỉ');
-        }
-      });
-
-      gpsBtn.addEventListener('click', async () => {
-        try {
-          const { lat, lng } = await MapModule.getCurrentPosition();
-          map.setCenter({ lat, lng });
-          marker.setPosition({ lat, lng });
-          setFromCoords(lat, lng, loc.address || '');
-          const addr = await MapModule.reverseGeocode(lat, lng).catch(() => '');
-          if (addr) {
-            setFromCoords(lat, lng, addr);
-            addrInput.value = addr;
-          }
-          Toast.success('Đã lấy vị trí GPS');
-        } catch (err) {
-          Toast.error(err.message);
-        }
-      });
-
-      latInput.addEventListener('change', () => {
-        const lat = parseFloat(latInput.value);
-        const lng = parseFloat(lngInput.value);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-        map.setCenter({ lat, lng });
-        marker.setPosition({ lat, lng });
-        setFromCoords(lat, lng, addrInput.value.trim() || loc.address || '');
-      });
-
-      lngInput.addEventListener('change', () => {
-        const lat = parseFloat(latInput.value);
-        const lng = parseFloat(lngInput.value);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-        map.setCenter({ lat, lng });
-        marker.setPosition({ lat, lng });
-        setFromCoords(lat, lng, addrInput.value.trim() || loc.address || '');
-      });
-    }
 
     const uploadArea = panel.querySelector('.loc-upload-area');
     const photoInput = panel.querySelector('.loc-photo-input');
@@ -2170,17 +1883,14 @@ const FormModule = (() => {
       photoInput.value = '';
     });
 
-    // Delete location
     panel.querySelector('.loc-delete').addEventListener('click', () => {
       Modal.confirm({
         title: 'Xóa địa điểm?',
         body: `Xóa địa điểm "<strong>${Utils.escHtml(loc.label || `Địa điểm ${idx+1}`)}</strong>" và tất cả ảnh liên quan?`,
         confirmLabel: 'Xóa',
         onConfirm: () => {
-          // Giải phóng preview URLs
           loc.photos.forEach(p => { if (p.previewUrl) ImageModule.revokeUrl(p.previewUrl); });
           locationsDraft.splice(idx, 1);
-          // Đảm bảo vẫn có 1 mặc định
           if (locationsDraft.length && !locationsDraft.some(l => l.isDefault)) {
             locationsDraft[0].isDefault = true;
           }
@@ -2189,14 +1899,12 @@ const FormModule = (() => {
       });
     });
 
-    // Set default
     panel.querySelector('.loc-set-default')?.addEventListener('click', () => {
       locationsDraft.forEach(l => l.isDefault = false);
       loc.isDefault = true;
       renderLocationsEditor();
     });
 
-    // Photo remove
     const photoGrid = panel.querySelector('.photo-upload-grid');
     photoGrid.addEventListener('click', e => {
       const btn = e.target.closest('.photo-remove-btn');
@@ -2204,10 +1912,9 @@ const FormModule = (() => {
       const pi = parseInt(btn.dataset.pidx);
       const removed = loc.photos.splice(pi, 1)[0];
       if (removed?.previewUrl) ImageModule.revokeUrl(removed.previewUrl);
-      renderLocationsEditor(); // Re-render toàn bộ để cập nhật index
+      renderLocationsEditor();
     });
 
-    // Khởi tạo mini map nếu đã có tọa độ
     if (loc.lat && loc.lng) {
       setTimeout(() => ensureFormMap(panel, idx, loc.lat, loc.lng), 50);
     }
@@ -2217,82 +1924,7 @@ const FormModule = (() => {
     const mapId = `form-map-${idx}`;
     const mapEl = panel.querySelector(`#${mapId}`);
     if (!mapEl) return;
-
-    if (mapEl.querySelector('.map-offline-msg')) {
-      mapEl.innerHTML = '';
-    }
-
-    const ready = await MapModule.ensureGoogleMapsReady();
-    if (!ready || !window.google || !window.google.maps) {
-      mapEl.innerHTML = `<div class="map-offline-msg">Google Maps chưa sẵn sàng. Vui lòng nhập API key trong Cài đặt.</div>`;
-      return;
-    }
-
-    if (!mapEl._gmMap) {
-      try {
-        const map = new google.maps.Map(mapEl, {
-          center: { lat, lng },
-          zoom: 17,
-          disableDefaultUI: false,
-          mapTypeControl: true,
-          streetViewControl: true,
-          fullscreenControl: true,
-          zoomControl: true,
-          gestureHandling: 'greedy'
-        });
-
-        map.addListener('click', async (e) => {
-          const clat = e.latLng.lat();
-          const clng = e.latLng.lng();
-          locationsDraft[idx].lat = clat;
-          locationsDraft[idx].lng = clng;
-          MapModule.setMarker(map, clat, clng, true, (la, lo) => {
-            locationsDraft[idx].lat = la;
-            locationsDraft[idx].lng = lo;
-            panel.querySelector('.loc-lat-input').value = la.toFixed(7);
-            panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
-          });
-          panel.querySelector('.loc-lat-input').value = clat.toFixed(7);
-          panel.querySelector('.loc-lng-input').value = clng.toFixed(7);
-
-          if (navigator.onLine && !locationsDraft[idx].address) {
-            try {
-              const addr = await MapModule.reverseGeocode(clat, clng);
-              if (addr) {
-                locationsDraft[idx].address = addr;
-                panel.querySelector('.loc-addr-input').value = addr;
-              }
-            } catch (e) {}
-          }
-        });
-
-        MapModule.setMarker(map, lat, lng, true, (la, lo) => {
-          locationsDraft[idx].lat = la;
-          locationsDraft[idx].lng = lo;
-          panel.querySelector('.loc-lat-input').value = la.toFixed(7);
-          panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
-        });
-
-        mapEl._gmMap = map;
-      } catch (err) {
-        mapEl.innerHTML = `<div class="map-offline-msg">Không tải được bản đồ (cần Internet)</div>`;
-        return;
-      }
-    } else {
-      MapModule.setMarker(mapEl._gmMap, lat, lng, true, (la, lo) => {
-        locationsDraft[idx].lat = la;
-        locationsDraft[idx].lng = lo;
-        panel.querySelector('.loc-lat-input').value = la.toFixed(7);
-        panel.querySelector('.loc-lng-input').value = lo.toFixed(7);
-      });
-    }
-
-    if (fly) {
-      MapModule.flyTo(mapEl._gmMap, lat, lng, 17);
-    } else {
-      mapEl._gmMap.panTo({ lat, lng });
-      mapEl._gmMap.setZoom(17);
-    }
+    mapEl.innerHTML = '<div class="map-offline-msg">Địa chỉ được lưu dạng văn bản. Bạn có thể mở Google Maps bằng nút bên dưới để điều hướng nhanh trên điện thoại.</div>';
   }
 
   async function processPhotos(files, idx, panel) {
@@ -2327,10 +1959,8 @@ const FormModule = (() => {
 
   function destroyFormMap() {
     document.querySelectorAll('[id^="form-map-"]').forEach(el => {
-      if (el._gmMap) {
-        el._gmMap = null;
-        el.innerHTML = '';
-      }
+      el.innerHTML = '';
+      el._gmMap = null;
     });
   }
 
@@ -2347,6 +1977,32 @@ const FormModule = (() => {
       document.getElementById('f-phone').focus();
       return;
     }
+
+    if (!Utils.isValidPhoneNumber(phone)) {
+      errEl.textContent = 'Số điện thoại không hợp lệ. Ví dụ: 0987654321 hoặc +84987654321';
+      errEl.style.display = 'block';
+      document.getElementById('f-phone').focus();
+      return;
+    }
+
+    if (!locationsDraft.length) {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+      Toast.error('Cần ít nhất 1 địa điểm giao hàng trước khi lưu khách hàng.');
+      const addBtn = document.getElementById('btn-add-location');
+      addBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addBtn?.focus?.();
+      return;
+    }
+
+    const emptyLocation = locationsDraft.find(loc => !String(loc.address || '').trim());
+    if (emptyLocation) {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+      Toast.error('Mỗi địa điểm cần có địa chỉ giao hàng trước khi lưu.');
+      return;
+    }
+
     errEl.style.display = 'none';
 
     // Kiểm tra trùng số điện thoại
@@ -2465,18 +2121,32 @@ const BackupModule = (() => {
         exportedAt: new Date().toISOString(),
         ...data
       };
-      const json = JSON.stringify(payload, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
+
+      const passphrase = window.prompt('Nhập mật khẩu để mã hóa file backup (để trống để xuất file plain text, KHÔNG NÊN làm nếu chia sẻ):', '');
+      let fileText = JSON.stringify(payload, null, 2);
+      let fileName = `so-giao-hang-backup-${new Date().toISOString().slice(0,10)}.json`;
+      let successMessage = `Đã xuất file sao lưu: ${fileName}`;
+
+      if (passphrase && passphrase.trim()) {
+        const encrypted = await Utils.encryptText(fileText, passphrase.trim());
+        if (!encrypted) throw new Error('Không thể mã hóa file backup.');
+        fileText = JSON.stringify({ ...encrypted, appName: 'SoGiaoHang', exportedAt: payload.exportedAt }, null, 2);
+        fileName = `so-giao-hang-backup-${new Date().toISOString().slice(0,10)}.enc.json`;
+        successMessage = `Đã xuất file backup đã mã hóa: ${fileName}`;
+      } else {
+        Toast.info('Bạn đang xuất backup không mã hóa. Chỉ nên lưu trên thiết bị cá nhân.');
+      }
+
+      const blob = new Blob([fileText], { type: 'application/json' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      const date = new Date().toISOString().slice(0,10);
       a.href = url;
-      a.download = `so-giao-hang-backup-${date}.json`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      Toast.success(`Đã xuất file sao lưu: so-giao-hang-backup-${date}.json`);
+      Toast.success(successMessage);
     } catch(err) {
       Toast.error('Lỗi xuất dữ liệu: ' + err.message);
     } finally {
@@ -2493,14 +2163,26 @@ const BackupModule = (() => {
     let parsed;
     try {
       const text = await Utils.readFileAsText(file);
-      parsed = JSON.parse(text);
+      const maybeJson = JSON.parse(text);
+
+      if (maybeJson && maybeJson.encrypted) {
+        const passphrase = window.prompt('Nhập mật khẩu backup để giải mã file:', '');
+        if (!passphrase || !passphrase.trim()) {
+          Loading.hide();
+          Toast.error('Cần nhập mật khẩu để mở file backup mã hóa.');
+          return;
+        }
+        const decrypted = await Utils.decryptText(maybeJson, passphrase.trim());
+        parsed = JSON.parse(decrypted);
+      } else {
+        parsed = maybeJson;
+      }
     } catch(err) {
       Loading.hide();
-      Toast.error('File JSON không hợp lệ: ' + err.message);
+      Toast.error('File JSON không hợp lệ hoặc mật khẩu không đúng: ' + err.message);
       return;
     }
 
-    // Kiểm tra cấu trúc
     if (!parsed.schemaVersion || !Array.isArray(parsed.customers)) {
       Loading.hide();
       Toast.error('File sao lưu không đúng định dạng Sổ Giao Hàng');
@@ -2513,7 +2195,6 @@ const BackupModule = (() => {
     const locCount  = (parsed.locations || []).length;
     const photoCount = (parsed.photos || []).length;
 
-    // Modal xem trước và chọn chế độ
     Modal.open({
       title: 'Khôi Phục Dữ Liệu',
       body: `
@@ -2558,41 +2239,7 @@ const BackupModule = (() => {
 // MODULE: SettingsModule
 // ============================================================
 const SettingsModule = (() => {
-  async function getGoogleApiKey() {
-    try {
-      const saved = await DB.getSetting('googleMapsApiKey', localStorage.getItem('googleMapsApiKey') || '');
-      return saved || localStorage.getItem('googleMapsApiKey') || '';
-    } catch (err) {
-      return localStorage.getItem('googleMapsApiKey') || '';
-    }
-  }
-
-  async function saveGoogleApiKey() {
-    const input = document.getElementById('google-maps-api-key');
-    if (!input) return;
-
-    const key = (input.value || '').trim();
-    if (!key) {
-      Toast.info('Nhập API key Google Maps trước khi lưu');
-      return;
-    }
-
-    try {
-      await DB.saveSetting('googleMapsApiKey', key);
-      localStorage.setItem('googleMapsApiKey', key);
-      input.value = key;
-      Toast.success('Đã lưu API key Google Maps');
-    } catch (err) {
-      Toast.error('Lỗi lưu API key: ' + err.message);
-    }
-  }
-
   async function init() {
-    const apiInput = document.getElementById('google-maps-api-key');
-    if (apiInput) {
-      apiInput.value = await getGoogleApiKey();
-    }
-
     // Storage info
     try {
       const info = await DB.getStorageInfo();
@@ -2647,7 +2294,7 @@ const SettingsModule = (() => {
     });
   }
 
-  return { init, getGoogleApiKey, saveGoogleApiKey, checkUpdate, clearAllData };
+  return { init, checkUpdate, clearAllData };
 })();
 
 // ============================================================
@@ -2707,7 +2354,6 @@ async function initApp() {
   // Settings
   document.getElementById('btn-update-sw').addEventListener('click', () => SettingsModule.checkUpdate());
   document.getElementById('btn-clear-all').addEventListener('click', () => SettingsModule.clearAllData());
-  document.getElementById('btn-save-google-key').addEventListener('click', () => SettingsModule.saveGoogleApiKey());
 
   // Search
   CustomerModule.initSearchListeners();
