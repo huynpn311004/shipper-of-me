@@ -482,7 +482,7 @@ const Utils = (() => {
     return new TextDecoder().decode(plainBuffer);
   }
 
-  return { uuid, normalizePhone, fmtDateTime, fmtDate, initials, escHtml, debounce,
+  return { uuid, normalizePhone, isValidPhoneNumber, fmtDateTime, fmtDate, initials, escHtml, debounce,
            readFileAsArrayBuffer, readFileAsText, blobToBase64, base64ToBlob,
            bytesToBase64, base64ToBytes, encryptText, decryptText };
 })();
